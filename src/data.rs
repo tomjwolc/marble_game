@@ -1,12 +1,24 @@
-use bevy::{prelude::{Color, Component}, ui::{UiRect, Val}};
+use bevy::{prelude::{Color, Component, Vec3}, ui::{UiRect, Val}};
 pub use std::f32::consts::PI;
+
+pub const SCALE: f32 = 10.0;
 
 pub const MAX_ANGLE: f32 = 0.5 * std::f32::consts::PI / 2.0;
 pub const SENSITIVITY: f32 = 100.0;
-pub const CAMERA_ORBIT_RADIUS: f32 = 4.0;
+pub const CAMERA_ORBIT_RADIUS: f32 = SCALE * 4.0;
 
-pub const MARBLE_RADIUS: f32 = 0.3;
+pub const MARBLE_MASS: f32 = 1.0;
+pub const MARBLE_RADIUS: f32 = SCALE * 0.3;
 pub const MARBLE_COLOR: Color = BUTTON_COLOR;
+pub const MARBLE_SPEED: f32 = SCALE * SCALE * 5.0;
+pub const MAX_ANGLE_SPEED: f32 = 20.0;
+pub const JUMP_IMPULSE: f32 = SCALE * 5.0;
+
+pub const SENSOR_THICKNESS: f32 = 1.0;
+
+pub const FRICTION: f32 = SCALE * 0.8;
+pub const GRAVITY: f32 = SCALE * 1.0;
+pub const RESTITUTION: f32 = 0.4;
 
 pub const BACKGROUND_COLOR: Color = color!(0x1C0B19);
 pub const FONT_PATH: &'static str = "fonts/RobotoCondensed-Regular.ttf";
@@ -21,3 +33,13 @@ pub const BUTTON_PADDING: UiRect = UiRect {
 
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Component)]
+pub struct PlayerSensor;
+
+// Applied to all objects that can be jumped off of
+#[derive(Component)]
+pub struct Jumpy;
+
+#[derive(Component)]
+pub struct CameraDir(pub Vec3);

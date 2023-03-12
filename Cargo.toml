@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 bevy = "0.10.0"
 bevy_rapier3d = "0.21.0"
+
+[profile.dev.package.bevy_rapier3d]
+opt-level = 3
