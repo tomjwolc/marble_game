@@ -105,10 +105,8 @@ pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 pub fn close_main_menu(
     entities_query: Query<Entity, With<MainMenuEntity>>,
-    mut commands: Commands, state: Res<State<AppState>>
+    mut commands: Commands
 ) {
-    println!("{:?}", state);
-
     for entity in entities_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
