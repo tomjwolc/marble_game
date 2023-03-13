@@ -1,27 +1,36 @@
+use bevy::app::AppExit;
+
 pub use super::*;
 
-mod main_menu;
-mod pause_menu;
-mod end_screen;
+// mod main_menu;
+// mod pause_menu;
+// mod end_screen;
 mod menu_controls;
 mod pause_physics;
 mod menu_scheduler;
+mod stock_menu;
 
 pub use {
-    main_menu::*,
-    pause_menu::*,
-    end_screen::*,
+    // main_menu::*,
+    // pause_menu::*,
+    // end_screen::*,
     menu_controls::*,
     pause_physics::*,
-    menu_scheduler::*
+    menu_scheduler::*,
+    stock_menu::*
 };
 
-pub fn debug_state_and_menu_type(
-    state: Res<State<AppState>>,
-    menu_scheduler: Res<MenuScheduler>,
-) {
-    // println!("{:?}, {:?}", state, menu_scheduler.get_menu_type());
-}
+#[derive(Component, Clone)]
+pub struct MainMenuItem;
+
+#[derive(Component, Clone)]
+pub struct PauseMenuItem;
+
+#[derive(Component, Clone)]
+pub struct DeathScreenItem;
+
+#[derive(Component, Clone)]
+pub struct WinScreenItem;
 
 pub struct MenuPlugin;
 
@@ -29,83 +38,140 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         let mut menu_scheduler = MenuScheduler::new();
 
+        // Main Menu
+        StockMenu::new(
+            "The Amazing Marble Game",
+            vec![
+                Button::new(
+                    "Start",
+                    vec![KeyCode::Return],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::None);
+                        state.set(AppState::None);
+                    })
+                ), Button::new(
+                    "Quit",
+                    vec![KeyCode::Q, KeyCode::Escape],
+                    pass_schedule!(move |mut exit: EventWriter<AppExit>| {
+                        exit.send(AppExit);
+                    })
+                )
+            ],
+            MainMenuItem
+        ).add_to_app(&mut menu_scheduler, MenuType::MainMenu, app);
 
-        add_menu_enter_systems!(menu_scheduler,
-            MenuType::MainMenu => setup_main_menu,
-            MenuType::PauseMenu => setup_pause_menu,
-            MenuType::DeathScreen => setup_end_screen
-        );
+        // Pause menu
+        StockMenu::new_overlay(
+            "Pause",
+            vec![
+                Button::new(
+                    "Restart",
+                    vec![KeyCode::R],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::None);
+                        state.set(AppState::None);
+                    })
+                ), Button::new(
+                    "Resume",
+                    vec![KeyCode::Escape],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::None);
+                        state.set(AppState::InGame);
+                    })
+                ), Button::new(
+                    "Quit",
+                    vec![KeyCode::Q],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::MainMenu);
+                        state.set(AppState::MenuScreen);
+                    })
+                ), Button::new_key_press_only(
+                    vec![KeyCode::W],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::WinScreen);
+                        state.set(AppState::OverlayMenu);
+                    })
+                ),
+            ],
+            PauseMenuItem
+        ).add_to_app(&mut menu_scheduler, MenuType::PauseMenu, app);
 
-        add_menu_exit_systems!(menu_scheduler,
-            MenuType::MainMenu => close_main_menu,
-            MenuType::PauseMenu => close_pause_menu,
-            MenuType::DeathScreen => close_end_screen
-        );
+        // Death menu
+        StockMenu::new_overlay(
+            "You Died!!",
+            vec![
+                Button::new(
+                    "Replay",
+                    vec![KeyCode::R, KeyCode::Return],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::None);
+                        state.set(AppState::None);
+                    })
+                ), Button::new(
+                    "Quit",
+                    vec![KeyCode::Q, KeyCode::Escape],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::MainMenu);
+                        state.set(AppState::MenuScreen);
+                    })
+                ),
+            ],
+            DeathScreenItem
+        ).add_to_app(&mut menu_scheduler, MenuType::DeathScreen, app);
 
-        add_menu_update_systems!(menu_scheduler,
-            MenuType::MainMenu => (
-                start_button_events,
-                quit_button_events
-            ),
-            MenuType::PauseMenu => (
-                restart_button_events,
-                resume_button_events,
-                quit_pause_menu_button_events
-            ),
-            MenuType::DeathScreen => (
-                replay_button_events,
-                quit_end_button_events
-            )
-        );
+        // Win menu
+        StockMenu::new_overlay(
+            "You Won!!",
+            vec![
+                Button::new(
+                    "Replay",
+                    vec![KeyCode::R, KeyCode::Return],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::None);
+                        state.set(AppState::None);
+                    })
+                ), Button::new(
+                    "Quit",
+                    vec![KeyCode::Q, KeyCode::Escape],
+                    pass_schedule!(move |
+                        mut menu_scheduler: ResMut<MenuScheduler>,
+                        mut state: ResMut<NextState<AppState>>
+                    | {
+                        menu_scheduler.set_menu_type(MenuType::MainMenu);
+                        state.set(AppState::MenuScreen);
+                    })
+                ),
+            ],
+            WinScreenItem
+        ).add_to_app(&mut menu_scheduler, MenuType::WinScreen, app);
 
         app
             .insert_resource(menu_scheduler)
-            .add_system(debug_state_and_menu_type)
             .add_system(transition_menu.run_if(state_changed::<AppState>()))
-            // .add_system(setup_main_menu.in_schedule(OnEnter(AppState::MainMenu)))
-            // .add_system(setup_overlay.in_schedule(OnEnter(AppState::OverlayMenu)))
-            // .add_system(setup_end_screen.in_schedule(OnEnter(AppState::EndScreen)))
-            
-            // .add_system(close_main_menu.in_schedule(OnExit(AppState::MainMenu)))
-            // .add_system(close_overlay.in_schedule(OnExit(AppState::OverlayMenu)))
-            // .add_system(close_end_screen.in_schedule(OnExit(AppState::EndScreen)))
-
-            .add_systems(distributive_run_if!(
-                can_update_menu(MenuType::MainMenu) => 
-                start_button_events,
-                quit_button_events
-            ))
-
-            .add_systems(distributive_run_if!(
-                can_update_menu(MenuType::PauseMenu) => 
-                restart_button_events,
-                resume_button_events,
-                quit_pause_menu_button_events
-            ))
-
-            .add_systems(distributive_run_if!(
-                can_update_menu(MenuType::DeathScreen) => 
-                replay_button_events,
-                quit_end_button_events
-            ))
-
-            // .add_systems(( // Main menu systems
-            //     start_button_events,
-            //     quit_button_events
-            // ).distributive_run_if(can_update_menu(MenuType::MainMenu)))
-
-            // .add_systems(( // Overlay menu systems
-            //     restart_button_events,
-            //     resume_button_events,
-            //     quit_overlay_button_events
-            // ).distributive_run_if(AppState::in_overlay_menu))
-
-            // .add_systems(( // End screen systems
-            //     replay_button_events,
-            //     quit_end_button_events
-            // ).distributive_run_if(AppState::in_end_screen))
-
-
             .add_system(
                 button_hover_event.run_if(AppState::in_menu)
             )

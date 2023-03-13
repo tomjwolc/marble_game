@@ -21,35 +21,42 @@ macro_rules! add_despawning_system {
 }
 
 macro_rules! add_menu_enter_systems {
-    ($menu_scheduler:ident, $($menu_type:expr => $system_name:ident),*) => {
+    ($menu_scheduler:ident: $($menu_type:expr => $system:expr),*) => {
         $(
-            $menu_scheduler  .get_enter_schedule_mut( $menu_type ).add_system( $system_name );
+            $menu_scheduler  .get_enter_schedule_mut( $menu_type ).add_system( $system );
         )*
     };
 }
 
 macro_rules! add_menu_exit_systems {
-    ($menu_scheduler:ident, $($menu_type:expr => $system_name:ident),*) => {
+    ($menu_scheduler:ident: $($menu_type:expr => $system:expr),*) => {
         $(
-            $menu_scheduler  .get_exit_schedule_mut( $menu_type ).add_system( $system_name );
+            $menu_scheduler  .get_exit_schedule_mut( $menu_type ).add_system( $system );
         )*
     };
 }
 
-macro_rules! add_menu_update_systems {
-    ($menu_scheduler:ident, $($menu_type:expr => ($( $system_name:ident ),*)),*) => {
-        $(
-            $menu_scheduler  .get_update_schedule_mut( $menu_type ) 
-                $( .add_system( $system_name ) )*;
-        )*
-    };
-}
-
+#[allow(unused_macros)]
 // same as regular distributive_run_if, except doesn't require implementing Clone
 macro_rules! distributive_run_if {
     ($condition:expr => $( $system:ident ),* ) => {
         ($(
             $system .run_if( $condition ),
         )*)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! on_key_press {
+    ($($key:ident),*) => {
+        move |keys: Res<Input<KeyCode>>| {
+           ( $(keys.just_pressed( KeyCode:: $key ) || )* false) 
+        }
+    };
+}
+
+macro_rules! pass_schedule {
+    ($system:expr) => {
+        { let mut schedule = Schedule::new(); schedule.add_system( $system ); schedule }
     };
 }

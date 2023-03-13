@@ -11,7 +11,7 @@ pub fn spawn_player(
         MarbleBundle::new(
             MARBLE_RADIUS,
             MARBLE_MASS,
-            FRICTION, RESTITUTION,
+            MARBLE_FRICTION, MARBLE_RESTITUTION,
             Transform::from_xyz(0.0, 10.0, 0.0),
             &mut meshes, 
             materials.add(StandardMaterial {

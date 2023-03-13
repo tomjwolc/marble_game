@@ -18,7 +18,7 @@ pub fn spawn_platforms(
             RigidBody::Fixed,
             TransformBundle::from(Transform::from_xyz(0.0, -2.0, 0.0).with_rotation(Quat::from_rotation_x(0.1))),
             ActiveEvents::COLLISION_EVENTS,
-            Friction::coefficient(FRICTION),
+            Friction::coefficient(MARBLE_FRICTION),
             InGameEntity,
             Jumpy
         )).insert(PbrBundle {
@@ -43,7 +43,7 @@ pub fn spawn_platforms(
                 RigidBody::Fixed,
                 TransformBundle::from(Transform::from_xyz(0.0, -7.0, -100.0).with_rotation(Quat::from_rotation_x(0.0))),
                 ActiveEvents::COLLISION_EVENTS,
-                Friction::coefficient(FRICTION),
+                Friction::coefficient(MARBLE_FRICTION),
                 InGameEntity,
                 Jumpy
             )).insert(PbrBundle {

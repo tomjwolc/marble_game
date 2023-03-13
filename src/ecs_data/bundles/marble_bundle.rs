@@ -36,7 +36,7 @@ impl MarbleBundle {
             collider: Collider::ball(radius),
             rigid_body: RigidBody::Dynamic, 
             velocity,
-            gravity_scale: GravityScale(GRAVITY),
+            gravity_scale: GravityScale(MARBLE_GRAVITY),
             active_events: ActiveEvents::COLLISION_EVENTS,
             pausable: Pausable::default(),
             pbr_bundle: PbrBundle {
@@ -63,7 +63,7 @@ impl Default for MarbleBundle {
             collider: Collider::ball(2.0 * MARBLE_RADIUS),
             rigid_body: RigidBody::Dynamic, 
             velocity: Velocity::zero(),
-            gravity_scale: GravityScale(GRAVITY),
+            gravity_scale: GravityScale(MARBLE_GRAVITY),
             active_events: ActiveEvents::COLLISION_EVENTS,
             pausable: Pausable::default(),
             pbr_bundle: PbrBundle::default()

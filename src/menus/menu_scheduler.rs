@@ -5,7 +5,6 @@ pub struct MenuScheduler {
     menu_type: MenuType,
     prev_menu_type: MenuType,
     enter_schedules: Vec<Schedule>,
-    update_schedules: Vec<Schedule>,
     exit_schedules: Vec<Schedule>,
 }
 
@@ -28,7 +27,6 @@ impl MenuScheduler {
             menu_type: MenuType::MainMenu,
             prev_menu_type: MenuType::None,
             enter_schedules: vec![0; NUM_MENU_TYPES].iter().map(|_| Schedule::new()).collect(),
-            update_schedules: vec![0; NUM_MENU_TYPES].iter().map(|_| Schedule::new()).collect(),
             exit_schedules: vec![0; NUM_MENU_TYPES].iter().map(|_| Schedule::new()).collect()
         }
     }
@@ -46,22 +44,16 @@ impl MenuScheduler {
         &mut self.enter_schedules[menu_type as usize]
     }
 
-    pub fn get_update_schedule_mut(&mut self, menu_type: MenuType) -> &mut Schedule {
-        &mut self.update_schedules[menu_type as usize]
-    }
-
     pub fn get_exit_schedule_mut(&mut self, menu_type: MenuType) -> &mut Schedule {
         &mut self.exit_schedules[menu_type as usize]
     }
 
     pub fn transition_menu(&mut self, world: &mut World) {
-        println!("Closing: {:?}\nOpening: {:?}\n\n", self.prev_menu_type, self.menu_type);
+        if DEBUG_MENUS {
+            println!("Closing: {:?}\nOpening: {:?}\n\n", self.prev_menu_type, self.menu_type);
+        }
         self.get_exit_schedule_mut(self.prev_menu_type).run(world);
         self.get_enter_schedule_mut(self.menu_type).run(world);
-    }
-
-    pub fn update_menu(&mut self, world: &mut World) {
-        self.get_update_schedule_mut(self.menu_type).run(world);
     }
 }
 

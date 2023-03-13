@@ -1,7 +1,7 @@
 pub use prelude::*;
 
 #[macro_use]
-pub mod macro_util;
+pub mod macro_utils;
 
 fn main() {
     let window_plugin = WindowPlugin {
