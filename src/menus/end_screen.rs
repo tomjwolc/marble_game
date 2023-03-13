@@ -62,7 +62,7 @@ pub fn setup_end_screen(mut commands: Commands, asset_server: Res<AssetServer>) 
                 })
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
-                        "Win/Lose",
+                        "You fell out of bounds!!",
                         TextStyle {
                             font: asset_server.load(FONT_PATH),
                             font_size: 100.0,
@@ -112,18 +112,22 @@ pub fn close_end_screen(
 
 pub fn replay_button_events(
     mut interaction_query: Query<&Interaction, With<EndReplayButton>>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
     mut state: ResMut<NextState<AppState>>
 ) {
     if let Ok(Interaction::Clicked) = interaction_query.get_single_mut() {
+        menu_scheduler.set_menu_type(MenuType::None);
         state.set(AppState::None);
     }
 }
 
 pub fn quit_end_button_events(
     mut interaction_query: Query<&Interaction, With<EndQuitButton>>,
-    mut state: ResMut<NextState<AppState>>
+    mut state: ResMut<NextState<AppState>>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
 ) {
     if let Ok(Interaction::Clicked) = interaction_query.get_single_mut() {
-        state.set(AppState::MainMenu);
+        menu_scheduler.set_menu_type(MenuType::MainMenu);
+        state.set(AppState::MenuScreen);
     }
 }

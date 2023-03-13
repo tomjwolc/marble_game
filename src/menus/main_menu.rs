@@ -114,9 +114,11 @@ pub fn close_main_menu(
 
 pub fn start_button_events(
     mut interaction_query: Query<&Interaction, With<MainMenuStartButton>>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
     mut state: ResMut<NextState<AppState>>
 ) {
     if let Ok(Interaction::Clicked) = interaction_query.get_single_mut() {
+        menu_scheduler.set_menu_type(MenuType::None);
         state.set(AppState::InGame);
     }
 }

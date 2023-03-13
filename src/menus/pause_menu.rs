@@ -1,18 +1,18 @@
 use super::*;
 
 #[derive(Component)]
-pub struct OverlayEntity;
+pub struct PauseMenuEntity;
 
 #[derive(Component)]
-pub struct OverlayRestartButton;
+pub struct PauseMenuRestartButton;
 
 #[derive(Component)]
-pub struct OverlayResumeButton;
+pub struct PauseMenuResumeButton;
 
 #[derive(Component)]
-pub struct OverlayQuitButton;
+pub struct PauseMenuQuitButton;
 
-pub fn setup_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_pause_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     let hover_event = HoverEvent { 
         color: BUTTON_COLOR, 
         hover_color: BUTTON_HOVER_COLOR 
@@ -45,7 +45,7 @@ pub fn setup_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             background_color: BACKGROUND_COLOR.with_a(0.7).into(),
             ..default()
-        }, OverlayEntity))
+        }, PauseMenuEntity))
         .with_children(|parent| {
             // Spawns Title banner
             parent
@@ -76,7 +76,7 @@ pub fn setup_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
             
             // Spawns start button
             parent
-                .spawn((button.clone(), hover_event, OverlayRestartButton))
+                .spawn((button.clone(), hover_event, PauseMenuRestartButton))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
                         "Restart",
@@ -90,7 +90,7 @@ pub fn setup_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
             
             // Spawns resume button
             parent
-                .spawn((button.clone(), hover_event, OverlayResumeButton))
+                .spawn((button.clone(), hover_event, PauseMenuResumeButton))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
                         "Resume",
@@ -104,7 +104,7 @@ pub fn setup_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
 
             // Spawns quit button
             parent
-                .spawn((button, hover_event, OverlayQuitButton))
+                .spawn((button, hover_event, PauseMenuQuitButton))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
                         "Quit",
@@ -118,8 +118,8 @@ pub fn setup_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-pub fn close_overlay(
-    entities_query: Query<Entity, With<OverlayEntity>>,
+pub fn close_pause_menu(
+    entities_query: Query<Entity, With<PauseMenuEntity>>,
     mut commands: Commands
 ) {
     for entity in entities_query.iter() {
@@ -128,28 +128,34 @@ pub fn close_overlay(
 }
 
 pub fn restart_button_events(
-    mut interaction_query: Query<&Interaction, With<OverlayRestartButton>>,
+    mut interaction_query: Query<&Interaction, With<PauseMenuRestartButton>>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
     mut state: ResMut<NextState<AppState>>
 ) {
     if let Ok(Interaction::Clicked) = interaction_query.get_single_mut() {
+        menu_scheduler.set_menu_type(MenuType::None);
         state.set(AppState::None);
     }
 }
 
 pub fn resume_button_events(
-    mut interaction_query: Query<&Interaction, With<OverlayResumeButton>>,
+    mut interaction_query: Query<&Interaction, With<PauseMenuResumeButton>>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
     mut state: ResMut<NextState<AppState>>
 ) {
     if let Ok(Interaction::Clicked) = interaction_query.get_single_mut() {
+        menu_scheduler.set_menu_type(MenuType::None);
         state.set(AppState::InGame);
     }
 }
 
-pub fn quit_overlay_button_events(
-    mut interaction_query: Query<&Interaction, With<OverlayQuitButton>>,
+pub fn quit_pause_menu_button_events(
+    mut interaction_query: Query<&Interaction, With<PauseMenuQuitButton>>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
     mut state: ResMut<NextState<AppState>>
 ) {
     if let Ok(Interaction::Clicked) = interaction_query.get_single_mut() {
-        state.set(AppState::MainMenu);
+        menu_scheduler.set_menu_type(MenuType::MainMenu);
+        state.set(AppState::MenuScreen);
     }
 }
