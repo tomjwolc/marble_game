@@ -2,18 +2,12 @@ use bevy::app::AppExit;
 
 pub use super::*;
 
-// mod main_menu;
-// mod pause_menu;
-// mod end_screen;
 mod menu_controls;
 mod pause_physics;
 mod menu_scheduler;
 mod stock_menu;
 
 pub use {
-    // main_menu::*,
-    // pause_menu::*,
-    // end_screen::*,
     menu_controls::*,
     pause_physics::*,
     menu_scheduler::*,
