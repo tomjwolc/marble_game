@@ -34,21 +34,18 @@ fn basic_setup(mut commands: Commands) {
     }, CameraDir(-Vec3::Z)));
 }
 
-mod data;
 mod level_generation;
 mod menus;
 mod movement;
 mod win_lose_reward;
-mod states;
 mod materials;
-mod bundles;
-mod components;
+mod ecs_data;
 
 mod prelude {
     pub use {crate::{
-        data::*, level_generation::*, menus::*,
-        movement::*, win_lose_reward::*, states::*, 
-        materials::*, bundles::*, components::*
+        level_generation::*, menus::*,
+        movement::*, win_lose_reward::*,
+        materials::*, ecs_data::*
     }, 
         bevy::prelude::*,
         bevy_rapier3d::prelude::*
