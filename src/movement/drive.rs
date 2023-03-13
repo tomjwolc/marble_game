@@ -67,7 +67,7 @@ pub fn move_sensor(
         return
     };
 
-    sensor_transform.translation = player_transform.translation - (MARBLE_RADIUS) * Vec3::Y;
+    sensor_transform.translation = player_transform.translation - (0.2 * MARBLE_RADIUS) * Vec3::Y;
 }
 
 pub fn update_can_jump(

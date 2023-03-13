@@ -17,7 +17,7 @@ fn main() {
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .add_plugins(DefaultPlugins.set(window_plugin).set(ImagePlugin::default_nearest()))
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-        .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(MenuPlugin)
         .add_plugin(LevelGenerationPlugin)
         .add_plugin(MovementPlugin)
@@ -41,12 +41,14 @@ mod movement;
 mod win_lose_reward;
 mod states;
 mod materials;
+mod bundles;
+mod components;
 
 mod prelude {
     pub use {crate::{
         data::*, level_generation::*, menus::*,
         movement::*, win_lose_reward::*, states::*, 
-        materials::*
+        materials::*, bundles::*, components::*
     }, 
         bevy::prelude::*,
         bevy_rapier3d::prelude::*

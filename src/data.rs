@@ -1,4 +1,4 @@
-use bevy::{prelude::{Color, Component, Vec3}, ui::{UiRect, Val}};
+use bevy::{prelude::Color, ui::{UiRect, Val}};
 pub use std::f32::consts::PI;
 
 pub const SCALE: f32 = 10.0;
@@ -18,7 +18,7 @@ pub const SENSOR_THICKNESS: f32 = 1.0;
 
 pub const FRICTION: f32 = SCALE * 0.8;
 pub const GRAVITY: f32 = SCALE * 1.0;
-pub const RESTITUTION: f32 = 0.4;
+pub const RESTITUTION: f32 = 0.1;
 
 pub const BACKGROUND_COLOR: Color = color!(0x1C0B19);
 pub const FONT_PATH: &'static str = "fonts/RobotoCondensed-Regular.ttf";
@@ -30,16 +30,3 @@ pub const BUTTON_PADDING: UiRect = UiRect {
     top: Val::Px(10.0), bottom: Val::Px(10.0),
     left: Val::Px(20.0), right: Val::Px(20.0)
 };
-
-#[derive(Component)]
-pub struct Player;
-
-#[derive(Component)]
-pub struct PlayerSensor;
-
-// Applied to all objects that can be jumped off of
-#[derive(Component)]
-pub struct Jumpy;
-
-#[derive(Component)]
-pub struct CameraDir(pub Vec3);

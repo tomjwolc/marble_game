@@ -53,7 +53,7 @@ impl Plugin for MenuPlugin {
             .add_system(go_back_to_game.in_schedule(OnEnter(AppState::None)))
 
             .add_system(pause_physics.in_schedule(OnExit(AppState::InGame)))
-            .add_system(un_pause_physics.in_schedule(OnExit(AppState::OverlayMenu)))
+            .add_system(unpause_physics.in_schedule(OnEnter(AppState::InGame)))
         ;
     }
 }

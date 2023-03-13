@@ -34,7 +34,7 @@ pub fn check_detection(
     
     for (collider1, collider2, is_intersecting) in rapier_context.intersections_with(sensor_entity) {
         if is_intersecting && (player_entity == collider1 || player_entity == collider2) {
-            states.set(AppState::None);
+            states.set(AppState::EndScreen);
         }
     }
 }

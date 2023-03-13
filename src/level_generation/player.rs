@@ -8,16 +8,19 @@ pub fn spawn_player(
 ) {
     commands.spawn((
         Player, 
-        InGameEntity, 
-        Collider::ball(MARBLE_RADIUS),
-        Friction::coefficient(FRICTION),
-        Restitution { coefficient: RESTITUTION, combine_rule: CoefficientCombineRule::Max },
-        RigidBody::Dynamic, 
-        GravityScale(GRAVITY),
-        TransformBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0)),
-        ActiveEvents::COLLISION_EVENTS,
-        ColliderMassProperties::Mass(MARBLE_MASS),
-        Velocity::zero(),
+        MarbleBundle::new(
+            MARBLE_RADIUS,
+            MARBLE_MASS,
+            FRICTION, RESTITUTION,
+            Transform::from_xyz(0.0, 10.0, 0.0),
+            &mut meshes, 
+            materials.add(StandardMaterial {
+                base_color_texture: Some(images.add(uv_debug_texture())),
+                base_color: Color::WHITE,
+                ..default()
+            }),
+            Velocity::zero()
+        ),
         ExternalForce {
             force: Vec3::ZERO,
             torque: Vec3::ZERO
@@ -25,27 +28,14 @@ pub fn spawn_player(
         ExternalImpulse {
             impulse: Vec3::ZERO,
             torque_impulse: Vec3::ZERO
-        },
-        LockedAxes::empty()
-    )).insert(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::UVSphere {
-            radius: MARBLE_RADIUS,
-            ..default()
-        })),
-        material: materials.add(StandardMaterial {
-            base_color_texture: Some(images.add(uv_debug_texture())),
-            base_color: Color::WHITE,
-            ..default()
-        }),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-    });
+        }
+    ));
 
     commands.spawn((
         PlayerSensor,
         InGameEntity,
         Sensor,
-        Collider::cuboid(MARBLE_RADIUS, SENSOR_THICKNESS, MARBLE_RADIUS),
+        Collider::ball(0.9 * MARBLE_RADIUS),
         RigidBody::Dynamic,
         LockedAxes::TRANSLATION_LOCKED,
         TransformBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0))

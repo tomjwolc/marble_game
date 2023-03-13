@@ -1,17 +1,23 @@
 use super::*;
 
 pub fn pause_physics(
-    mut unlocked_axis_query: Query<&mut LockedAxes, (With<InGameEntity>, Without<Sensor>)>
+    mut pausable_query: Query<(&mut RigidBody, &Velocity, &mut Pausable), (With<InGameEntity>, Without<Sensor>)>
 ) {
-    for mut locked_axes in unlocked_axis_query.iter_mut() {
-        *locked_axes = LockedAxes::TRANSLATION_LOCKED;
+    for (mut rigid_body, velocity, mut pausable) in pausable_query.iter_mut() {
+        *pausable = Pausable {
+            velocity: *velocity,
+            prev_rigid_body: *rigid_body
+        };
+
+        *rigid_body = RigidBody::Fixed;
     }
 }
 
-pub fn un_pause_physics(
-    mut locked_axis_query: Query<&mut LockedAxes, (With<InGameEntity>, Without<Sensor>)>
+pub fn unpause_physics(
+    mut pausable_query: Query<(&mut RigidBody, &mut Velocity, &Pausable), (With<InGameEntity>, Without<Sensor>)>
 ) {
-    for mut locked_axes in locked_axis_query.iter_mut() {
-        *locked_axes = LockedAxes::empty();
+    for (mut rigid_body, mut velocity, pausable) in pausable_query.iter_mut() {
+        *rigid_body = pausable.prev_rigid_body;
+        *velocity = pausable.velocity;
     }
 }
