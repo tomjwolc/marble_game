@@ -1,7 +1,7 @@
 use bevy::{prelude::Color, ui::{UiRect, Val}};
 pub use std::f32::consts::PI;
 
-pub const DEBUG_MENUS: bool = true;
+pub const DEBUG_MENUS: bool = false;
 
 // Scale for physics
 pub const SCALE: f32 = 10.0;
