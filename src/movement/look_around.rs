@@ -2,51 +2,78 @@ use bevy::{window::CursorGrabMode, input::mouse::MouseMotion};
 
 use super::*; 
 
+// sets camera_dir component
 pub fn rotate_camera(
     mut camera_dir_query: Query<&mut CameraDir, With<Camera>>,
+    player_transform_query: Query<&Gravity, (With<Player>, Without<Camera>)>,
     mut mouse_motion: EventReader<MouseMotion>
 ) {
-    let Ok(mut camera_dir) = camera_dir_query.get_single_mut() else { 
-        panic!("move_camera() could not find camera") 
+    panic_extract!(rotate_camera:
+        Ok(mut camera_dir) = camera_dir_query.get_single_mut();
+        Ok(&Gravity(mut gravity, _)) = player_transform_query.get_single()
+    );
+
+    let CameraDir { horizontal_direction, pitch } = &mut *camera_dir;
+    gravity = if gravity.length() > 0.0 { gravity.normalize() } else { -Vec3::Y };
+
+    *horizontal_direction = (
+        *horizontal_direction - 
+        horizontal_direction.project_onto(
+            (-gravity).normalize()
+        )).normalize();
+
+    ignore_extract!(
+        Some(&MouseMotion { delta }) = mouse_motion.iter().last()
+    );
+
+    *pitch += delta.y / SENSITIVITY;
+
+    *pitch = if *pitch >  MAX_ANGLE {
+        MAX_ANGLE
+    }   else if *pitch < -MAX_ANGLE {
+        -MAX_ANGLE
+    } else {
+        *pitch
     };
-
-    let Some(MouseMotion { delta }) = mouse_motion.iter().last() else { return };
-
-    let forward = -camera_dir.0;
-    let vertical_rotation_axis = Vec3::Y.cross(forward).normalize();
-    let mut rotation = Quat::from_rotation_x(0.0);
-
-    if  // rotates the quat vertically if our vertical rotation is within acceptable parameters
-        (delta.y < 0.0 && forward.angle_between(Vec3::Y) > (PI / 2.0) - MAX_ANGLE) ||
-        (delta.y > 0.0 && forward.angle_between(Vec3::Y) < (PI / 2.0) + MAX_ANGLE)
-    {
-        rotation = rotation.mul_quat(Quat::from_axis_angle(vertical_rotation_axis, delta.y / SENSITIVITY));
-    }
     
-    rotation = rotation.mul_quat(Quat::from_axis_angle(Vec3::Y, -delta.x / SENSITIVITY));
-
-    camera_dir.0 = rotation.mul_vec3(camera_dir.0);
+    *horizontal_direction = Quat::from_axis_angle(
+        (-gravity).normalize(), 
+        -delta.x / SENSITIVITY
+    ).mul_vec3(*horizontal_direction);
 }
 
+// Uses camera_dir to place the camera
 pub fn update_camera(
     mut camera_query: Query<(&mut Transform, &CameraDir), With<Camera>>,
-    player_transform_query: Query<&Transform, (With<Player>, Without<Camera>)>
+    player_transform_query: Query<(&Transform, &Gravity), (With<Player>, Without<Camera>)>
 ) {
-    let Ok((mut camera_transform, camera_dir)) = camera_query.get_single_mut() else { 
-        panic!("move_camera() could not find camera") 
-    };
+    panic_extract!(update_camera:
+        Ok((mut camera_transform, camera_dir)) = camera_query.get_single_mut();
+        Ok((player_transform, &Gravity(mut gravity, _))) = player_transform_query.get_single()
+    );
 
-    let Ok(player_transform) = player_transform_query.get_single() else { 
-        panic!("move_camera() could not find player") 
-    };
+    let CameraDir { horizontal_direction, pitch } = *camera_dir;
+
+    gravity = if gravity.length() > 0.0 { gravity.normalize() } else { -Vec3::Y };
+
+    // Axis that the rotates around to look up and down
+    let vertical_rotation_axis = horizontal_direction.cross(-gravity).normalize();
+
+    // Rotate the camera up or down according to pitch (radians)
+    let direction = Quat::from_axis_angle(
+        vertical_rotation_axis, 
+        pitch
+    ).mul_vec3(horizontal_direction);
+
+    println!("{}\n{}\n", vertical_rotation_axis, direction);
 
     // Updates the position of the camera
     camera_transform.translation = 
-        (CAMERA_ORBIT_RADIUS * camera_dir.0) + player_transform.translation;
+        (CAMERA_ORBIT_RADIUS * direction) + player_transform.translation;
 
     // Rotate camera to face player
     *camera_transform = camera_transform
-        .looking_at(player_transform.translation, Vec3::Y);
+        .looking_at(player_transform.translation, -gravity);
 }
 
 pub fn lock_cursor(

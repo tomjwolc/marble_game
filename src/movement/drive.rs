@@ -2,14 +2,15 @@ use super::*;
 
 pub fn move_player(
     keys: Res<Input<KeyCode>>,
-    mut player_query: Query<(&mut ExternalImpulse, &mut ExternalForce, &Velocity), With<Player>>,
+    mut player_query: Query<(&mut ExternalImpulse, &mut ExternalForce, &Velocity, &Gravity), With<Player>>,
     camera_transform_query: Query<&Transform, With<Camera>>,
     can_jump: Res<CanJump>
 ) {
     let Ok((
         mut player_impulse, 
         mut player_force, 
-        player_velocity
+        player_velocity,
+        &Gravity(gravity, _)
     )) = player_query.get_single_mut() else { 
         println!("player_query: {:?}", player_query); 
         return
@@ -20,7 +21,7 @@ pub fn move_player(
     };
 
     let left = MARBLE_SPEED * camera_transform.left().normalize();
-    let forward = MARBLE_SPEED * left.cross(Vec3::Y).normalize();
+    let forward = MARBLE_SPEED * left.cross(-gravity).normalize();
 
     player_force.torque = Vec3::ZERO;
 
@@ -49,15 +50,15 @@ pub fn move_player(
     } 
 
     if keys.just_pressed(KeyCode::Space) && can_jump.0 {
-        player_impulse.impulse.y = JUMP_IMPULSE
+        player_impulse.impulse = JUMP_IMPULSE * -gravity.normalize();
     }
 }
 
 pub fn move_sensor(
-    player_transform_query: Query<&Transform, With<Player>>,
+    player_transform_query: Query<(&Transform, &Gravity), With<Player>>,
     mut sensor_transform_query: Query<&mut Transform, (With<PlayerSensor>, Without<Player>)>
 ) {
-    let Ok(player_transform) = player_transform_query.get_single() else {
+    let Ok((player_transform, &Gravity(gravity, _))) = player_transform_query.get_single() else {
         println!("Could not find player in move_sensor");
         return;
     };
@@ -67,7 +68,7 @@ pub fn move_sensor(
         return
     };
 
-    sensor_transform.translation = player_transform.translation - (0.2 * MARBLE_RADIUS) * Vec3::Y;
+    sensor_transform.translation = player_transform.translation + (0.2 * MARBLE_RADIUS) * gravity.normalize();
 }
 
 pub fn update_can_jump(

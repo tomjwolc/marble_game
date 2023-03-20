@@ -2,13 +2,13 @@ use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 
 use super::*;
 
-// Creates a colorful test pattern
+// Creates a colorful test pattern  COPIED FROM BEVY SHAPES EXAMPLE
 pub fn uv_debug_texture() -> Image {
     const TEXTURE_SIZE: usize = 8;
 
     let mut palette: [u8; 32] = [
-        255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255, 121, 255, 102, 255, 102, 255,
-        198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
+        255, 102, 159, 100,     255, 159, 102, 100,     236, 255, 102, 255,     121, 255, 102, 255, 
+        102, 255, 198, 255,     102, 198, 255, 255,     121, 102, 255, 255,     236, 102, 255, 255,
     ];
 
     let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];

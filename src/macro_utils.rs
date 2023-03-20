@@ -60,3 +60,59 @@ macro_rules! pass_schedule {
         { let mut schedule = Schedule::new(); schedule.add_system( $system ); schedule }
     };
 }
+
+macro_rules! panic_extract {
+    ($fn_name:ident : $(
+        $let_pat:pat = $let_expr:expr
+    );*) => {
+        $(
+            let $let_pat = $let_expr else { 
+                panic!(
+                    "Could not exectute {} = {} in {}!", 
+                    stringify!( $let_pat ),
+                    stringify!( $let_expr ), 
+                    stringify!( $fn_name )
+                ); 
+            };
+        )*
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! log_extract {
+    ($fn_name:ident : $(
+        $let_pat:pat = $let_expr:expr
+    );*) => {
+        $(
+            let $let_pat = $let_expr else { 
+                panic!(
+                    "Could not exectute {} = {} in {}!", 
+                    stringify!( $let_pat ),
+                    stringify!( $let_expr ), 
+                    stringify!( $fn_name )
+                ); 
+                return;
+            };
+        )*
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! ignore_extract {
+    ($(
+        $let_pat:pat = $let_expr:expr
+    );*) => {
+        $(
+            let $let_pat = $let_expr else { 
+                return;
+            };
+        )*
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! bounded {
+    (($a:expr) < ($b:expr) < ($c:expr)) => {
+        ($a < $b) && ($b < $c)
+    };
+}

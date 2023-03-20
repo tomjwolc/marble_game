@@ -3,8 +3,7 @@ use super::*;
 pub fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut images: ResMut<Assets<Image>>,
+    default_material: Res<DefaultMaterial>
 ) {
     commands.spawn((
         Player, 
@@ -14,17 +13,9 @@ pub fn spawn_player(
             MARBLE_FRICTION, MARBLE_RESTITUTION,
             Transform::from_xyz(0.0, 10.0, 0.0),
             &mut meshes, 
-            materials.add(StandardMaterial {
-                base_color_texture: Some(images.add(uv_debug_texture())),
-                base_color: Color::WHITE,
-                ..default()
-            }),
+            default_material.0.clone(),
             Velocity::zero()
         ),
-        ExternalForce {
-            force: Vec3::ZERO,
-            torque: Vec3::ZERO
-        },
         ExternalImpulse {
             impulse: Vec3::ZERO,
             torque_impulse: Vec3::ZERO

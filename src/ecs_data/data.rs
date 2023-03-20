@@ -6,17 +6,19 @@ pub const DEBUG_MENUS: bool = false;
 // Scale for physics
 pub const SCALE: f32 = 10.0;
 
+pub const GRAVITATIONAL_CONSTANT: f32 = 0.01;
+
 // Camera orbit
-pub const MAX_ANGLE: f32 = 0.5 * std::f32::consts::PI / 2.0;
+pub const MAX_ANGLE: f32 = 0.6 * std::f32::consts::PI / 2.0;
 pub const SENSITIVITY: f32 = 100.0;
-pub const CAMERA_ORBIT_RADIUS: f32 = SCALE * 4.0;
+pub const CAMERA_ORBIT_RADIUS: f32 = SCALE * 6.0;
 
 // Marble
 pub const MARBLE_MASS: f32 = 1.0;
 pub const MARBLE_RADIUS: f32 = SCALE * 0.3;
 pub const MARBLE_COLOR: Color = BUTTON_COLOR;
-pub const MARBLE_SPEED: f32 = SCALE * SCALE * 5.0;
-pub const MAX_ANGLE_SPEED: f32 = 20.0;
+pub const MARBLE_SPEED: f32 = SCALE * SCALE * 8.0;
+pub const MAX_ANGLE_SPEED: f32 = 30.0;
 pub const JUMP_IMPULSE: f32 = SCALE * 5.0;
 pub const MARBLE_FRICTION: f32 = SCALE * 0.8;
 pub const MARBLE_GRAVITY: f32 = SCALE * 1.0;
