@@ -45,11 +45,12 @@ pub fn rotate_camera(
 // Uses camera_dir to place the camera
 pub fn update_camera(
     mut camera_query: Query<(&mut Transform, &CameraDir), With<Camera>>,
-    player_transform_query: Query<(&Transform, &Gravity), (With<Player>, Without<Camera>)>
+    player_transform_query: Query<(Entity, &Transform, &Gravity), (With<Player>, Without<Camera>)>,
+    rapier_context: Res<RapierContext>
 ) {
     panic_extract!(update_camera:
         Ok((mut camera_transform, camera_dir)) = camera_query.get_single_mut();
-        Ok((player_transform, &Gravity(mut gravity, _))) = player_transform_query.get_single()
+        Ok((player_entity, player_transform, &Gravity(mut gravity, _))) = player_transform_query.get_single()
     );
 
     let CameraDir { horizontal_direction, pitch } = *camera_dir;
@@ -65,11 +66,24 @@ pub fn update_camera(
         pitch
     ).mul_vec3(horizontal_direction);
 
-    println!("{}\n{}\n", vertical_rotation_axis, direction);
-
     // Updates the position of the camera
     camera_transform.translation = 
         (CAMERA_ORBIT_RADIUS * direction) + player_transform.translation;
+
+    // Checks if the camera is inside a collider and moves it up
+    if let Some((_, distance)) = rapier_context.cast_ray(
+        player_transform.translation, 
+        (camera_transform.translation - player_transform.translation).normalize(), 
+        CAMERA_ORBIT_RADIUS, 
+        false, 
+        QueryFilter::default()
+            .exclude_collider(player_entity)
+            .exclude_rigid_body(player_entity)
+            .exclude_sensors()
+    ) {
+        camera_transform.translation = 
+            ((distance - SURFACE_OFFSET) * direction) + player_transform.translation;
+    }
 
     // Rotate camera to face player
     *camera_transform = camera_transform

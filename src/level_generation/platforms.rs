@@ -63,7 +63,7 @@ pub fn spawn_platforms(
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(0.0, 50.0, 0.0),
+        transform: Transform::from_xyz(0.0, 250.0, 0.0),
         ..default()
     }, InGameEntity));
 
@@ -81,8 +81,8 @@ pub fn spawn_platforms(
 
     // ambient light
     commands.insert_resource(AmbientLight {
-        color: Color::WHITE,
-        brightness: 0.3,
+        color: AMBIENT_COLOR,
+        brightness: AMBIENT_BRIGHTNESS,
     });
 
     // directional 'sun' light
@@ -110,19 +110,9 @@ pub fn spawn_platforms(
 
     commands.spawn((Jumpy, MarbleBundle::new(
         7.0 * MARBLE_RADIUS,
-        10000000.0,
+        10.0,
         0.0, 0.6,
         Transform::from_xyz(-50.0, 0.0, -140.0),
-        &mut meshes, 
-        default_material.0.clone(),
-        Velocity::zero()
-    )));
-
-    commands.spawn((Jumpy, MarbleBundle::new(
-        7.0 * MARBLE_RADIUS,
-        0.001,
-        100.0, 0.6,
-        Transform::from_xyz(50.0, 0.0, -140.0),
         &mut meshes, 
         default_material.0.clone(),
         Velocity::zero()
@@ -131,7 +121,17 @@ pub fn spawn_platforms(
     // commands.spawn((Jumpy, MarbleBundle::new(
     //     150.0,
     //     1000000000.0,
-    //     500.0, 1.0,
+    //     500.0, 0.3,
+    //     Transform::from_xyz(0.0, -100.0, 0.0),
+    //     &mut meshes, 
+    //     default_material.0.clone(),
+    //     Velocity::zero()
+    // ).fixed()));
+
+    // commands.spawn((Jumpy, MarbleBundle::new(
+    //     250.0,
+    //     1000000000.0,
+    //     1.0, 0.3,
     //     Transform::from_xyz(0.0, 300.0, 0.0),
     //     &mut meshes, 
     //     default_material.0.clone(),

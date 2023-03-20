@@ -4,18 +4,18 @@ use super::*;
 pub struct RespawnSensor;
 
 pub fn setup_respawn_detector(
-    mut commands: Commands
+    // mut commands: Commands
 ) {
-    commands
-        .spawn((
-            Collider::cuboid(10000.0, 100.0, 10000.0), 
-            RigidBody::Dynamic,
-            LockedAxes::TRANSLATION_LOCKED,
-            TransformBundle::from(Transform::from_xyz(0.0, -200.0, 0.0)),
-            InGameEntity,
-            Sensor,
-            RespawnSensor
-        ));
+    // commands
+    //     .spawn((
+    //         Collider::cuboid(10000.0, 100.0, 10000.0), 
+    //         RigidBody::Dynamic,
+    //         LockedAxes::TRANSLATION_LOCKED,
+    //         TransformBundle::from(Transform::from_xyz(0.0, -200.0, 0.0)),
+    //         InGameEntity,
+    //         Sensor,
+    //         RespawnSensor
+    //     ));
 }
 
 pub fn check_detection(
