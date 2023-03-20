@@ -25,13 +25,10 @@ pub fn check_detection(
     mut states: ResMut<NextState<AppState>>,
     mut menu_scheduler: ResMut<MenuScheduler>
 ) {
-    let Ok(sensor_entity) = respawn_sensor_entity_query.get_single() else {
-        return
-    };
-
-    let Ok(player_entity) = player_entity_query.get_single() else {
-        return
-    };
+    ignore_extract!(
+        Ok(sensor_entity) = respawn_sensor_entity_query.get_single();
+        Ok(player_entity) = player_entity_query.get_single()
+    );
     
     for (collider1, collider2, is_intersecting) in rapier_context.intersections_with(sensor_entity) {
         if is_intersecting && (player_entity == collider1 || player_entity == collider2) {

@@ -85,7 +85,7 @@ macro_rules! log_extract {
     );*) => {
         $(
             let $let_pat = $let_expr else { 
-                panic!(
+                println!(
                     "Could not exectute {} = {} in {}!", 
                     stringify!( $let_pat ),
                     stringify!( $let_expr ), 

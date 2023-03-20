@@ -110,7 +110,7 @@ pub fn spawn_platforms(
 
     commands.spawn((Jumpy, MarbleBundle::new(
         7.0 * MARBLE_RADIUS,
-        100.0,
+        10000000.0,
         0.0, 0.6,
         Transform::from_xyz(-50.0, 0.0, -140.0),
         &mut meshes, 
@@ -128,20 +128,20 @@ pub fn spawn_platforms(
         Velocity::zero()
     )));
 
-    commands.spawn((Jumpy, MarbleBundle::new(
-        200.0,
-        400000000.0,
-        100.0, 0.3,
-        Transform::from_xyz(0.0, 300.0, 0.0),
-        &mut meshes, 
-        default_material.0.clone(),
-        Velocity::zero()
-    ).fixed()));
+    // commands.spawn((Jumpy, MarbleBundle::new(
+    //     150.0,
+    //     1000000000.0,
+    //     500.0, 1.0,
+    //     Transform::from_xyz(0.0, 300.0, 0.0),
+    //     &mut meshes, 
+    //     default_material.0.clone(),
+    //     Velocity::zero()
+    // ).fixed()));
 
     commands.spawn((Jumpy, MarbleBundle::new(
-        200.0,
-        400000000.0,
-        100.0, 0.3,
+        250.0,
+        1000000000.0,
+        1.0, 0.3,
         Transform::from_xyz(600.0, 300.0, 0.0),
         &mut meshes, 
         default_material.0.clone(),

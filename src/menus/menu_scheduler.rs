@@ -58,7 +58,7 @@ impl MenuScheduler {
 }
 
 pub fn transition_menu(world: &mut World) {
-    let Some(mut menu_scheduler) = world.remove_resource::<MenuScheduler>() else { return };
+    ignore_extract!(Some(mut menu_scheduler) = world.remove_resource::<MenuScheduler>());
     menu_scheduler.transition_menu(world);
     world.insert_resource(menu_scheduler);
 }
