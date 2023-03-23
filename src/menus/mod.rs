@@ -6,25 +6,17 @@ mod menu_controls;
 mod pause_physics;
 mod menu_scheduler;
 mod stock_menu;
+mod loading_menu;
+mod menu_components;
 
 pub use {
     menu_controls::*,
     pause_physics::*,
     menu_scheduler::*,
-    stock_menu::*
+    stock_menu::*,
+    loading_menu::*,
+    menu_components::*
 };
-
-#[derive(Component, Clone)]
-pub struct MainMenuItem;
-
-#[derive(Component, Clone)]
-pub struct PauseMenuItem;
-
-#[derive(Component, Clone)]
-pub struct DeathScreenItem;
-
-#[derive(Component, Clone)]
-pub struct WinScreenItem;
 
 pub struct MenuPlugin;
 
@@ -43,8 +35,10 @@ impl Plugin for MenuPlugin {
                         mut menu_scheduler: ResMut<MenuScheduler>,
                         mut state: ResMut<NextState<AppState>>
                     | {
-                        menu_scheduler.set_menu_type(MenuType::None);
-                        state.set(AppState::None);
+                        // Switch to the loading screen, which will then redirect to InGame if
+                        // the level has been loaded
+                        menu_scheduler.set_menu_type(MenuType::Loading);
+                        state.set(AppState::MenuScreen);
                     })
                 ), Button::new(
                     "Quit",
@@ -163,9 +157,18 @@ impl Plugin for MenuPlugin {
             WinScreenItem
         ).add_to_app(&mut menu_scheduler, MenuType::WinScreen, app);
 
+        // Loading menu
+        menu_scheduler.get_enter_schedule_mut(MenuType::Loading)
+            .add_system(load_glb_asset)
+            .add_system(setup_loading_screen);
+
+        menu_scheduler.get_exit_schedule_mut(MenuType::Loading)
+            .add_system(remove_loading_screen);
+
         app
             .insert_resource(menu_scheduler)
-            .add_system(transition_menu.run_if(state_changed::<AppState>()))
+            .insert_resource(PrevMenuType(MenuType::None))
+            .add_system(transition_menu.run_if(menu_type_changed))
             .add_system(
                 button_hover_event.run_if(AppState::in_menu)
             )
@@ -175,6 +178,7 @@ impl Plugin for MenuPlugin {
 
             .add_system(pause_physics.in_schedule(OnExit(AppState::InGame)))
             .add_system(unpause_physics.in_schedule(OnEnter(AppState::InGame)))
+            .add_system(check_for_load.run_if(can_update_menu(MenuType::Loading)))
         ;
     }
 }

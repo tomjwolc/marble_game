@@ -11,7 +11,7 @@ pub struct MenuScheduler {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum MenuType {
     MainMenu = 0,     // OutGame
-    LevelSelect = 1,  // OutGame
+    Loading = 1,  // OutGame
     PauseMenu = 2,    // PauseGame
     DeathScreen = 3,  // PauseGame
     WinScreen = 4,    // PauseGame
@@ -57,10 +57,28 @@ impl MenuScheduler {
     }
 }
 
+#[derive(Resource)]
+pub struct PrevMenuType(pub MenuType);
+
+pub fn menu_type_changed(
+    menu_scheduler: Res<MenuScheduler>, 
+    prev_menu_type: Res<PrevMenuType>
+) -> bool {
+    menu_scheduler.is_changed() && menu_scheduler.get_menu_type() != prev_menu_type.0
+}
+
 pub fn transition_menu(world: &mut World) {
-    ignore_extract!(Some(mut menu_scheduler) = world.remove_resource::<MenuScheduler>());
+    ignore_extract!(
+        Some(mut menu_scheduler) = world.remove_resource::<MenuScheduler>();
+        Some(mut prev_menu_type) = world.remove_resource::<PrevMenuType>()
+    );
+
+    prev_menu_type.0 = menu_scheduler.get_menu_type();
+
     menu_scheduler.transition_menu(world);
+
     world.insert_resource(menu_scheduler);
+    world.insert_resource(prev_menu_type);
 }
 
 pub fn can_update_menu(menu_type: MenuType) -> impl FnMut(Res<State<AppState>>, Res<MenuScheduler>) -> bool {

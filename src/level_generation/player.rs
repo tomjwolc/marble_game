@@ -11,7 +11,7 @@ pub fn spawn_player(
             MARBLE_RADIUS,
             MARBLE_MASS,
             MARBLE_FRICTION, MARBLE_RESTITUTION,
-            Transform::from_xyz(0.0, 10.0, 0.0),
+            Transform::from_xyz(0.0, 0.0, 0.0),
             &mut meshes, 
             default_material.0.clone(),
             Velocity::zero()
@@ -19,7 +19,8 @@ pub fn spawn_player(
         ExternalImpulse {
             impulse: Vec3::ZERO,
             torque_impulse: Vec3::ZERO
-        }
+        },
+        Damping { linear_damping: 0.0, angular_damping: ANGULAR_DAMPING }
     ));
 
     commands.spawn((

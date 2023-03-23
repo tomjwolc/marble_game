@@ -29,7 +29,14 @@ pub struct Pausable {
 }
 
 #[derive(Component, Clone)]
-pub struct Gravity(pub Vec3, pub bool);
+pub struct Gravity(pub Vec3, pub GravityType);
+
+#[derive(Clone, Eq, PartialEq)]
+pub enum GravityType {
+    Constant,       // Constant gravity
+    Planets,        // Gravitation pull toward masses
+    AntiPlanets     // Gravitation pull away from masses
+}
 
 #[derive(Component)]
 pub struct GravityChangeSensor(pub Vec3);

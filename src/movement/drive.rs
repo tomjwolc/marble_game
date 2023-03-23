@@ -11,10 +11,12 @@ pub fn move_player(
             mut player_impulse, 
             mut player_force, 
             player_velocity,
-            &Gravity(gravity, _)
+            &Gravity(mut gravity, _)
         )) = player_query.get_single_mut();
         Ok(camera_transform) = camera_transform_query.get_single()
     );
+
+    gravity = if gravity.length() > 0.0 { gravity } else { -Vec3::Y };
 
     let left = MARBLE_SPEED * camera_transform.left().normalize();
     let forward = MARBLE_SPEED * left.cross(-gravity).normalize();

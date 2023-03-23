@@ -13,19 +13,23 @@ pub struct GravityBundle {
 
 impl GravityBundle {
     pub fn from_mass(mass: f32) -> Self {
-        Self { 
-            gravity: Gravity(Vec3::ZERO, false), 
-            grivity_scale: GravityScale(0.0),
-            force: ExternalForce { force: Vec3::ZERO, torque: Vec3::ZERO } ,
-            mass: ColliderMassProperties::Mass(mass)
+        Self {
+            mass: ColliderMassProperties::Mass(mass),
+            ..Default::default()
         }
+    }
+
+    pub fn with_gravity(mut self, gravity: Gravity) -> Self {
+        self.gravity = gravity;
+
+        self
     }
 }
 
 impl Default for GravityBundle {
     fn default() -> Self {
         Self { 
-            gravity: Gravity(Vec3::ZERO, false), 
+            gravity: Gravity(-GRAVITY * Vec3::Y, GravityType::Constant), 
             grivity_scale: GravityScale(0.0),
             force: ExternalForce { force: Vec3::ZERO, torque: Vec3::ZERO } ,
             mass: ColliderMassProperties::Mass(1.0)

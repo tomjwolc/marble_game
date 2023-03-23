@@ -18,7 +18,7 @@ fn main() {
         .insert_resource(DefaultMaterial(Handle::default()))
         .add_plugins(DefaultPlugins.set(window_plugin).set(ImagePlugin::default_nearest()))
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-        // .add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(MenuPlugin)
         .add_plugin(LevelGenerationPlugin)
         .add_plugin(MovementPlugin)
