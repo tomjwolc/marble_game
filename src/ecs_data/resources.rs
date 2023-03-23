@@ -6,23 +6,32 @@ use super::*;
 pub struct DefaultMaterial(pub Handle<StandardMaterial>);
 
 #[derive(Resource)]
-pub struct NextLevel {
+pub struct LevelStack(Vec<Level>);
+
+pub struct Level {
     pub handle: Option<Handle<Gltf>>,
     pub file_name: &'static str
 }
 
-impl NextLevel {
-    pub fn from_level(file_name: &'static str) -> Self {
-        Self {
-            handle: None,
-            file_name
-        }
+// It is assumed that LevelStack will always have at least one element in it
+impl LevelStack {
+    pub fn pop(&mut self) -> Level {
+        self.0.pop().unwrap()
     }
 
-    pub fn set_file(&mut self, file_name: &'static str) {
-        *self = Self {
-            handle: None,
-            file_name
-        }
+    pub fn push(&mut self, level: Level) {
+        self.0.push(level);
+    }
+
+    pub fn from_level(file_name: &'static str) -> Self {
+        Self(vec![Level { handle: None, file_name }])
+    }
+
+    pub fn get_current_level(&self) -> &Level {
+        self.0.last().unwrap()
+    }
+
+    pub fn get_current_level_mut(&mut self) -> &mut Level {
+        self.0.last_mut().unwrap()
     }
 }

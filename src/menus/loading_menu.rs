@@ -39,13 +39,13 @@ pub fn remove_loading_screen(
 }
 
 pub fn check_for_load(
-    next_level: Res<NextLevel>,
+    level_stack: Res<LevelStack>,
     gltf_assets: Res<Assets<Gltf>>,
     mut menu_scheduler: ResMut<MenuScheduler>,
     mut next_state: ResMut<NextState<AppState>>
 ) {
     ignore_extract!(
-        Some( gltf_handle ) = &next_level.handle;
+        Some( gltf_handle ) = &level_stack.get_current_level().handle;
         Some( _ ) = gltf_assets.get(&gltf_handle)
     );
 

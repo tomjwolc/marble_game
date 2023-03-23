@@ -23,6 +23,7 @@ fn main() {
         .add_plugin(LevelGenerationPlugin)
         .add_plugin(MovementPlugin)
         .add_plugin(GravityPlugin)
+        .add_plugin(SensorPlugin)
         .add_startup_system(basic_setup)
         .run();
 }
@@ -54,12 +55,14 @@ mod win_lose_reward;
 mod materials;
 mod ecs_data;
 mod gravity;
+mod sensors;
 
 mod prelude {
     pub use {crate::{
         level_generation::*, menus::*,
         movement::*, win_lose_reward::*,
-        materials::*, ecs_data::*, gravity::*
+        materials::*, ecs_data::*, gravity::*,
+        sensors::*
     }, 
         bevy::prelude::*,
         bevy_rapier3d::prelude::*

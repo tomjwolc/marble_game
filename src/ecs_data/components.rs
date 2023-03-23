@@ -22,12 +22,15 @@ impl Default for CameraDir {
     }
 }
 
+// Applied to any physics objects that need to stop during pause screen
 #[derive(Default, Component)]
 pub struct Pausable {
     pub velocity: Velocity,
     pub prev_rigid_body: Option<RigidBody>
 }
 
+
+// --------------------------- Gravity
 #[derive(Component, Clone)]
 pub struct Gravity(pub Vec3, pub GravityType);
 
@@ -43,3 +46,41 @@ pub struct GravityChangeSensor(pub Vec3);
 
 #[derive(Component)]
 pub struct NotGravityWell;
+
+// For doors, warps, etc.
+#[derive(Component, Clone, Debug)]
+pub struct Activatable {
+    pub requirements: Vec<usize>,
+    pub is_active: bool
+}
+
+// For buttons, levers, timers, etc.
+#[derive(Component, Clone, Debug)]
+pub struct Activator {
+    pub id: usize,
+    pub is_active: bool
+}
+
+// Describes where the warp will take you
+#[derive(Component, Clone, Debug)]
+pub enum WarpTo {
+    File(String),
+    Out
+}
+
+#[derive(Component, Eq, PartialEq, Clone, Debug)]
+pub enum SensorChannel {
+    Respawn,
+    Warp,
+    Button,
+    All
+}
+
+impl SensorChannel {
+    pub fn in_channel(&self, other: &Self) -> bool {
+        self == other || *self == Self::All || *other == Self::All
+    }
+}
+
+#[derive(Component)]
+pub struct RespawnSensor;

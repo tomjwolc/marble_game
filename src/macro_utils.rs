@@ -111,6 +111,19 @@ macro_rules! ignore_extract {
 }
 
 #[allow(unused_macros)]
+macro_rules! extract {
+    ($expr:stmt ; $(
+        $let_pat:pat = $let_expr:expr
+    );*) => {
+        $(
+            let $let_pat = $let_expr else { 
+                $expr
+            };
+        )*
+    }
+}
+
+#[allow(unused_macros)]
 macro_rules! bounded {
     (($a:expr) < ($b:expr) < ($c:expr)) => {
         ($a < $b) && ($b < $c)

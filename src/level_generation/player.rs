@@ -20,7 +20,8 @@ pub fn spawn_player(
             impulse: Vec3::ZERO,
             torque_impulse: Vec3::ZERO
         },
-        Damping { linear_damping: 0.0, angular_damping: ANGULAR_DAMPING }
+        Damping { linear_damping: 0.0, angular_damping: ANGULAR_DAMPING },
+        SensorChannel::All
     ));
 
     commands.spawn((

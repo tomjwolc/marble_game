@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 bevy = "0.10.0"
 bevy_rapier3d = "0.21.0"
+serde_json = "1.0.94"
+serde = "1.0.158"
 
 [profile.dev.package.bevy_rapier3d]
 opt-level = 3

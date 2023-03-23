@@ -2,7 +2,7 @@ use bevy::{window::CursorGrabMode, input::mouse::MouseMotion};
 
 use super::*; 
 
-// sets camera_dir component
+// Sets camera_dir component
 pub fn rotate_camera(
     mut camera_dir_query: Query<&mut CameraDir, With<Camera>>,
     player_transform_query: Query<&Gravity, (With<Player>, Without<Camera>)>,

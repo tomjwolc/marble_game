@@ -1,7 +1,7 @@
 use bevy::{prelude::Color, ui::{UiRect, Val}};
 pub use std::f32::consts::PI;
 
-pub const DEBUG_MENUS: bool = true;
+pub const DEBUG_MENUS: bool = false;
 
 // Scale for physics
 pub const SCALE: f32 = 10.0;
@@ -27,6 +27,10 @@ pub const MARBLE_FRICTION: f32 = SCALE * 0.8;
 pub const MARBLE_GRAVITY: f32 = SCALE * 1.0;
 pub const MARBLE_RESTITUTION: f32 = 0.1;
 pub const ANGULAR_DAMPING: f32 = 0.5;
+
+// Warp
+pub const WARP_FRICTION: f32 = 0.5;
+pub const WARP_RESTITUTION: f32 = 0.1;
 
 // sensor
 pub const SENSOR_THICKNESS: f32 = 1.0;

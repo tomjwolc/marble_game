@@ -35,7 +35,7 @@ impl Plugin for MenuPlugin {
                         mut menu_scheduler: ResMut<MenuScheduler>,
                         mut state: ResMut<NextState<AppState>>
                     | {
-                        // Switch to the loading screen, which will then redirect to InGame if
+                        //     Switch to the loading screen, which will then redirect to InGame if
                         // the level has been loaded
                         menu_scheduler.set_menu_type(MenuType::Loading);
                         state.set(AppState::MenuScreen);
