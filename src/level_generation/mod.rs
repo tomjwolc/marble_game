@@ -3,12 +3,10 @@ pub use super::*;
 use bevy::gltf::Gltf;
 
 mod player;
-// mod respawn_detector;
 mod load_glb;
 
 pub use {
     player::*,
-    // respawn_detector::*,
     load_glb::*
 };
 

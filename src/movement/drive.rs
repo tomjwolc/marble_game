@@ -4,7 +4,8 @@ pub fn move_player(
     keys: Res<Input<KeyCode>>,
     mut player_query: Query<(&mut ExternalImpulse, &mut ExternalForce, &Velocity, &Gravity), With<Player>>,
     camera_transform_query: Query<&Transform, With<Camera>>,
-    can_jump: Res<CanJump>
+    can_jump: Res<CanJump>,
+    mut key_queue: ResMut<KeyQueue>
 ) {
     panic_extract!(move_player:
         Ok((
@@ -45,9 +46,11 @@ pub fn move_player(
         player_velocity.angvel.dot((-forward).normalize()) < MAX_ANGLE_SPEED 
     {
         player_force.torque -= forward;
-    } 
+    }
 
-    if keys.just_pressed(KeyCode::Space) && can_jump.0 {
+    let is_not_falling = gravity.dot(player_velocity.linvel) <= 0.0;
+
+    if can_jump.0 && is_not_falling && key_queue.0.remove(&KeyCode::Space).is_some() {
         player_impulse.impulse = JUMP_IMPULSE * -gravity.normalize();
     }
 }
@@ -61,7 +64,8 @@ pub fn move_sensor(
         Ok(mut sensor_transform) = sensor_transform_query.get_single_mut()
     );
 
-    sensor_transform.translation = player_transform.translation + (0.2 * MARBLE_RADIUS) * gravity.normalize();
+    sensor_transform.translation = 
+        player_transform.translation + JUMP_SENSOR_OFFSET * gravity.normalize();
 }
 
 pub fn update_can_jump(

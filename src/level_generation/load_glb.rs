@@ -77,8 +77,8 @@ pub fn load_glb(
                         ..Default::default()
                     }).with_children(|parent| {
                         parent.spawn((SensorBundle::from_collider(
-                            Collider::cylinder(0.2, 1.0)
-                            ).with_transform(Transform::from_xyz(0.0, 0.35, 0.0))
+                            Collider::cylinder(WARP_SENSOR_HEIGHT / 2.0, 1.0)
+                            ).with_transform(Transform::from_xyz(0.0, WARP_SENSOR_HEIGHT / 2.0, 0.0))
                             .with_sensor_channel(SensorChannel::Warp), 
                             warp_to
                         ));
@@ -342,12 +342,9 @@ impl From<ExtrasData> for GltfObjectType {
                 density,
                 .. 
             } => {
-                let material_properties = if let Some(str) = material_type {
-                    MATERIAL_PROPERTIES.get(&str).unwrap_or(&DEFAULT_MATERIAL_PROPERTIES).clone()
-                } else {
-                    DEFAULT_MATERIAL_PROPERTIES
-                };
-
+                let material_properties = 
+                    MaterialProperties::from(material_type, is_dynamic != 0);
+                    
                 let mass_properties = if let Some(mass) = mass {
                     ColliderMassProperties::Mass(mass)
                 } else if let Some(density) = density {

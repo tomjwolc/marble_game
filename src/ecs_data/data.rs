@@ -15,7 +15,7 @@ pub const GRAVITY: f32 = 20.0 * SCALE;
 // Defaults for all objects
 pub const NUM_STACKS: usize = 50;
 pub const NUM_SECTORS: usize = 50;
-pub const FRICTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Max;
+pub const FRICTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Multiply;
 pub const RESTITUTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Average;
 
 // Camera orbit
@@ -23,6 +23,9 @@ pub const MAX_ANGLE: f32 = 0.6 * std::f32::consts::PI / 2.0;
 pub const SENSITIVITY: f32 = 100.0;
 pub const CAMERA_ORBIT_RADIUS: f32 = SCALE * 6.0;
 pub const SURFACE_OFFSET: f32 = 0.1;
+
+// keypress que
+pub const  KEY_QUEUE_LIFESPAN: usize = 10;
 
 // Marble
 pub const MARBLE_MASS: f32 = 1.0;
@@ -36,9 +39,13 @@ pub const MARBLE_GRAVITY: f32 = SCALE * 1.0;
 pub const MARBLE_RESTITUTION: f32 = 0.1;
 pub const ANGULAR_DAMPING: f32 = 0.5;
 
+// Marble jump sensor
+pub const JUMP_SENSOR_OFFSET: f32 = 0.1 * SCALE;
+
 // Warp
 pub const WARP_FRICTION: f32 = 0.5;
 pub const WARP_RESTITUTION: f32 = 0.1;
+pub const WARP_SENSOR_HEIGHT: f32 = 0.3 * SCALE;
 
 // movable
 pub const MOVABLE_FRICTION: Friction = Friction { coefficient: 0.5, combine_rule: FRICTION_COMBINE_RULE };
@@ -72,14 +79,35 @@ pub struct MaterialProperties {
 }
 
 pub const DEFAULT_MATERIAL_PROPERTIES: MaterialProperties = MaterialProperties { 
-    restitution: Restitution { coefficient: 0.3, combine_rule: RESTITUTION_COMBINE_RULE },
-    friction:    Friction    { coefficient: 1.3, combine_rule: FRICTION_COMBINE_RULE    },
+    restitution: Restitution { coefficient: 0.1, combine_rule: RESTITUTION_COMBINE_RULE },
+    friction:    Friction    { coefficient: 2.0, combine_rule: FRICTION_COMBINE_RULE    },
 };
 
 pub static MATERIAL_PROPERTIES: phf::Map<&'static str, MaterialProperties> = phf_map! {
-    "default" => DEFAULT_MATERIAL_PROPERTIES,
+    "default_fixed" => DEFAULT_MATERIAL_PROPERTIES,
+    "default_movable" => MaterialProperties {
+        restitution: Restitution { coefficient: 0.05,  combine_rule: RESTITUTION_COMBINE_RULE    },
+        friction:    Friction    { coefficient: 0.3, combine_rule: FRICTION_COMBINE_RULE },
+    },
     "ice" => MaterialProperties { 
-        restitution: Restitution { coefficient: 0.1,  combine_rule: RESTITUTION_COMBINE_RULE    },
-        friction:    Friction    { coefficient: 0.05, combine_rule: CoefficientCombineRule::Min },
+        restitution: Restitution { coefficient: 0.05,  combine_rule: RESTITUTION_COMBINE_RULE    },
+        friction:    Friction    { coefficient: 0.0, combine_rule: FRICTION_COMBINE_RULE },
     }
 };
+
+impl MaterialProperties {
+    pub fn from(string: Option<String>, is_dynamic: bool) -> Self {
+        *match (string, is_dynamic) {
+            (Some(material_key), _) if MATERIAL_PROPERTIES.get(material_key.as_str())
+            .is_some() => MATERIAL_PROPERTIES
+                .get(material_key.as_str())
+                .unwrap(),
+            (_, true) => MATERIAL_PROPERTIES
+                .get("default_movable")
+                .unwrap(),
+            (_, false) => MATERIAL_PROPERTIES
+                .get("default_fixed")
+                .unwrap()
+        }
+    }
+}
