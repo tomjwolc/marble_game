@@ -1,5 +1,7 @@
 use bevy::{prelude::Color, ui::{UiRect, Val}};
+use bevy_rapier3d::prelude::{Friction, CoefficientCombineRule, Restitution};
 pub use std::f32::consts::PI;
+use phf::phf_map;
 
 pub const DEBUG_MENUS: bool = false;
 
@@ -9,6 +11,12 @@ pub const SCALE: f32 = 10.0;
 // Gravity
 pub const GRAVITATIONAL_CONSTANT: f32 = 0.01;
 pub const GRAVITY: f32 = 20.0 * SCALE;
+
+// Defaults for all objects
+pub const NUM_STACKS: usize = 50;
+pub const NUM_SECTORS: usize = 50;
+pub const FRICTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Max;
+pub const RESTITUTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Average;
 
 // Camera orbit
 pub const MAX_ANGLE: f32 = 0.6 * std::f32::consts::PI / 2.0;
@@ -23,7 +31,7 @@ pub const MARBLE_COLOR: Color = color!(0xF49F0A);
 pub const MARBLE_SPEED: f32 = SCALE * SCALE * 8.0;
 pub const MAX_ANGLE_SPEED: f32 = 30.0;
 pub const JUMP_IMPULSE: f32 = SCALE * 5.0;
-pub const MARBLE_FRICTION: f32 = SCALE * 0.8;
+pub const MARBLE_FRICTION: f32 = 0.8;
 pub const MARBLE_GRAVITY: f32 = SCALE * 1.0;
 pub const MARBLE_RESTITUTION: f32 = 0.1;
 pub const ANGULAR_DAMPING: f32 = 0.5;
@@ -31,6 +39,11 @@ pub const ANGULAR_DAMPING: f32 = 0.5;
 // Warp
 pub const WARP_FRICTION: f32 = 0.5;
 pub const WARP_RESTITUTION: f32 = 0.1;
+
+// movable
+pub const MOVABLE_FRICTION: Friction = Friction { coefficient: 0.5, combine_rule: FRICTION_COMBINE_RULE };
+pub const MOVABLE_RESTITUTION: Restitution = Restitution { coefficient: 0.5, combine_rule: RESTITUTION_COMBINE_RULE };
+
 
 // sensor
 pub const SENSOR_THICKNESS: f32 = 1.0;
@@ -50,4 +63,23 @@ pub const BUTTON_TEXT_COLOR: Color = BACKGROUND_COLOR;
 pub const BUTTON_PADDING: UiRect = UiRect {
     top: Val::Px(10.0), bottom: Val::Px(10.0),
     left: Val::Px(20.0), right: Val::Px(20.0)
+};
+
+#[derive(Clone, Copy, Debug)]
+pub struct MaterialProperties {
+    pub restitution: Restitution,
+    pub friction: Friction
+}
+
+pub const DEFAULT_MATERIAL_PROPERTIES: MaterialProperties = MaterialProperties { 
+    restitution: Restitution { coefficient: 0.3, combine_rule: RESTITUTION_COMBINE_RULE },
+    friction:    Friction    { coefficient: 1.3, combine_rule: FRICTION_COMBINE_RULE    },
+};
+
+pub static MATERIAL_PROPERTIES: phf::Map<&'static str, MaterialProperties> = phf_map! {
+    "default" => DEFAULT_MATERIAL_PROPERTIES,
+    "ice" => MaterialProperties { 
+        restitution: Restitution { coefficient: 0.1,  combine_rule: RESTITUTION_COMBINE_RULE    },
+        friction:    Friction    { coefficient: 0.05, combine_rule: CoefficientCombineRule::Min },
+    }
 };

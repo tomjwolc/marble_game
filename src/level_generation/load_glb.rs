@@ -1,6 +1,6 @@
 // use bevy::scene::SceneInstance;
 
-use bevy::gltf::{GltfMesh, GltfNode, GltfPrimitive};
+use bevy::gltf::{GltfMesh, GltfNode};
 use serde::{Serialize, Deserialize};
 
 use super::*;
@@ -9,10 +9,11 @@ pub fn load_glb_asset(
     asset_server: Res<AssetServer>,
     mut level_stack: ResMut<LevelStack>
 ) {
-    let gltf = asset_server.load(
-        format!("levels/{}.glb", level_stack.get_current_level().file_name).as_str()
-    );
-    level_stack.get_current_level_mut().handle = Some(gltf.clone());
+    if level_stack.get_current_level().handle.is_none() {
+        level_stack.get_current_level_mut().handle = Some(asset_server.load(
+            format!("levels/{}.glb", level_stack.get_current_level().file_name).as_str()
+        ));
+    }
 }
 
 pub fn load_glb(
@@ -21,7 +22,8 @@ pub fn load_glb(
     gltf_assets: Res<Assets<Gltf>>,
     gltf_node_assets: Res<Assets<GltfNode>>,
     gltf_mesh_assets: Res<Assets<GltfMesh>>,
-    mesh_assets: Res<Assets<Mesh>>
+    mesh_assets: ResMut<Assets<Mesh>>,
+    default_material: Res<DefaultMaterial>
 ) {
     if let Some(gltf) = gltf_assets.get(&level_stack.get_current_level().handle.as_ref().unwrap()) {
         for node_handle in gltf.nodes.iter() {
@@ -39,61 +41,167 @@ pub fn load_glb(
                 if let Some(extras) = &node.extras { extras.value.as_str() } else { "{}" }
             ).unwrap();
 
-            // println!("{:?}", GltfObjectType::from(extras_data.clone()));
+            // Most objects only have 1 primitive
+            let mesh0 = gltf_mesh.primitives[0].mesh.clone();
+            let material0 = if let Some( material ) 
+                = gltf_mesh.primitives[0].material.clone() {
+                material
+            } else {
+                default_material.0.clone()
+            };
 
+            let object_type = GltfObjectType::from(extras_data);
             let mut transform = node.transform.with_scale(SCALE * Vec3::ONE);
             transform.translation *= SCALE;
 
-            commands.spawn((
-                InGameEntity, 
-                Visibility::Visible,
-                ComputedVisibility::default(),
-                TransformBundle::from(transform)
-            )).with_children(|parent| {
-                GltfObjectType::from(extras_data).spawn_bundles(
-                    parent, 
-                    &gltf_mesh.primitives, 
-                    &mesh_assets
-                );
-            });
+            println!("{:?}", object_type);
+
+            match object_type {
+                GltfObjectType::Warp(
+                    warp_to, 
+                    activatable
+                ) => {
+                    commands.spawn(WarpBundle {
+                        pbr_bundle: PbrBundle {
+                            mesh: mesh0.clone(),
+                            material: material0,
+                            transform,
+                            ..Default::default()
+                        },
+                        collider: Collider::from_bevy_mesh(
+                            mesh_assets.get(&mesh0).unwrap(), 
+                            &ComputedColliderShape::TriMesh
+                        ).expect("Could not create warp collider from mesh"),
+                        warp_to: warp_to.clone(),
+                        activatable,
+                        ..Default::default()
+                    }).with_children(|parent| {
+                        parent.spawn((SensorBundle::from_collider(
+                            Collider::cylinder(0.2, 1.0)
+                            ).with_transform(Transform::from_xyz(0.0, 0.35, 0.0))
+                            .with_sensor_channel(SensorChannel::Warp), 
+                            warp_to
+                        ));
+                    });
+                },
+
+                GltfObjectType::Sensor(
+                    sensor_channel, 
+                    shape, 
+                    sizes
+                ) => {
+                    commands.spawn(SensorBundle::from_shape(
+                        shape, sizes, &mesh_assets, 
+                        &mesh0
+                    ).with_transform(transform).with_sensor_channel(sensor_channel));
+                },
+
+                GltfObjectType::Movable(
+                    shape, 
+                    sizes, 
+                    mass_properties,
+                    material_properties
+                ) => {
+                    commands.spawn(MovableBundle::from_shape(
+                        shape, sizes, &mesh_assets, 
+                        &mesh0
+                    ).with_pbr_bundle(PbrBundle {
+                        mesh: mesh0,
+                        material: material0,
+                        transform,
+                        ..Default::default()
+                    }).with_properties(mass_properties, material_properties));
+                },
+                
+                GltfObjectType::Fixed(
+                    shape, 
+                    sizes, 
+                    material_properties
+                ) => {
+                    commands.spawn(FixedBundle::from_shape(
+                        shape, sizes, &mesh_assets, 
+                        &mesh0
+                    ).with_pbr_bundle(PbrBundle {
+                        mesh: mesh0,
+                        material: material0,
+                        transform,
+                        ..Default::default()
+                    }).with_properties(material_properties));
+                },
+
+                _ => {
+                    for primitive in gltf_mesh.primitives.iter() {
+                        let material = if let Some( material ) = primitive.material.clone() {
+                            material
+                        } else {
+                            default_material.0.clone()
+                        };
+                        
+                        commands.spawn(FixedBundle::from_mesh(
+                            &mesh_assets, 
+                            &primitive.mesh
+                        ).with_pbr_bundle(PbrBundle {
+                            mesh: primitive.mesh.clone(),
+                            material,
+                            transform,
+                            ..Default::default()
+                        }));
+                    }
+                }
+            };
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ExtrasData {
-    file_name: Option<String>,
-    //     Meant to be vec, but blender doesn't support variable length arrays
-    // for custom properties, so String in form "1,3,4"
-    activation_requirements: Option<String>,
-    activator_type: Option<String>,
-    activator_id: Option<usize>,
-    on_activate: Option<String>,
-    planet_radius: Option<f32>,
-    // The i32 means nothing, the field just checks that it is a respawn_detector
-    respawn_detector: Option<i32>
+    // warp info
+        file_name: Option<String>,
+        activation_requirements: Option<Vec<usize>>,
+    // activator info
+        activator_type: Option<String>,
+        activator_id: Option<usize>,
+    // sensor/object info
+        // Box vs ball vs ..
+        shape: Option<String>,
+        sizes: Option<Vec<f32>>,
+    // sensor info
+        sensor_channel: Option<String>,
+    // object info
+        // blender doesn't support bool's as custom properties >:(
+        is_dynamic: Option<i8>,
+        // Either mass or density with be Some(..)
+        mass: Option<f32>,
+        density: Option<f32>,
+        // default vs ice vs ..
+        material_type: Option<String>
 }
 
 #[derive(Debug)]
 enum GltfObjectType {
     Warp(WarpTo, Activatable),
-    // Button(Activator),
-    RespawnDetector,
-    // Planet(f32),
+    Sensor(SensorChannel, String, Vec<f32>),
+    Movable(String, Vec<f32>, ColliderMassProperties, MaterialProperties),
+    Fixed(String, Vec<f32>, MaterialProperties),
     Object
 }
 
 impl GltfObjectType {
+    
+
+    /*
     fn spawn_bundles(&self, 
-        parent: &mut ChildBuilder, 
+        commands: &mut Commands, 
         primitives: &Vec<GltfPrimitive>, 
-        mesh_assets: &Assets<Mesh>
-    ) {
+        mesh_assets: &mut Assets<Mesh>,
+        default_material: &DefaultMaterial,
+        transform: Transform
+    ) -> impl Bundle {
         match self {
             GltfObjectType::Warp(warp_to, activatable) => {
                 let Some( mesh ) = mesh_assets.get(&primitives[0].mesh) else { return };
 
-                parent.spawn(WarpBundle {
+                commands.spawn(WarpBundle {
                     collider: Collider::from_bevy_mesh(
                         mesh, 
                         &ComputedColliderShape::TriMesh
@@ -101,6 +209,7 @@ impl GltfObjectType {
                     pbr_bundle: PbrBundle {
                         mesh: primitives[0].mesh.clone(),
                         material: primitives[0].material.clone().expect("Warp primitive didn't have material"),
+                        transform,
                         ..Default::default()
                     },
                     warp_to: warp_to.clone(),
@@ -111,67 +220,150 @@ impl GltfObjectType {
             GltfObjectType::RespawnDetector => {
                 let Some( mesh ) = mesh_assets.get(&primitives[0].mesh) else { return };
 
-                parent.spawn((
+                commands.spawn((
                     Collider::from_bevy_mesh(
                         mesh, 
                         &ComputedColliderShape::TriMesh
                     ).expect("Could not create collider from warp mesh"),
                     RigidBody::Dynamic,
                     LockedAxes::TRANSLATION_LOCKED,
-                    TransformBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0)),
+                    TransformBundle::from_transform(transform),
                     Sensor,
-                    SensorChannel::Respawn
+                    SensorChannel::Respawn,
+                    InGameEntity
                 ));
+            },
+            GltfObjectType::Shape(shape, size) => {
+                for primitive in primitives.iter() {
+                    commands.spawn((
+                        PbrBundle {
+                            mesh: mesh_assets.add(shape::Box::new(
+                                2.0 * size[0], 2.0 * size[1], 2.0 * size[2]
+                            ).into()),
+                            material: primitive.material
+                                .as_ref()
+                                .unwrap_or(&default_material.0)
+                                .clone(),
+                            transform,
+                            ..Default::default()
+                        },
+                        Collider::cuboid(size[0], size[1], size[2]),
+                        ActiveEvents::COLLISION_EVENTS,
+                        RigidBody::Dynamic,
+                        GravityBundle::from_mass(0.2),
+                        Friction::coefficient(0.0),
+                        Restitution::coefficient(0.2),
+                        Velocity::zero(),
+                        Jumpy,
+                        Pausable::default(),
+                        InGameEntity
+                    ));
+                }
             },
             _ => {
                 for primitive in primitives.iter() {
                     let Some( mesh ) = mesh_assets.get(&primitive.mesh) else { continue };
 
-                    parent.spawn((
+                    commands.spawn((
                         PbrBundle {
                             mesh: primitive.mesh.clone(),
                             material: primitive.material
                                 .as_ref()
-                                .expect("Could not find material in primitive")
+                                .unwrap_or(&default_material.0)
                                 .clone(),
+                            transform,
                             ..Default::default()
                         },
                         Collider::from_bevy_mesh(
                             mesh, 
                             &ComputedColliderShape::TriMesh
                         ).expect("Could not create collider from bevy mesh"),
-                        Jumpy
+                        Jumpy,
+                        InGameEntity
                     ));
                 }
             }
         }
     }
+    */
 }
 
 impl From<ExtrasData> for GltfObjectType {
-    fn from(value: ExtrasData) -> Self {
-        match value {
+    fn from(extras_data: ExtrasData) -> Self {
+        match extras_data {
+
+            // Warp
             ExtrasData { 
                 file_name: Some(file_name), 
-                activation_requirements: Some(activation_requirements), 
-                .. 
-            } => GltfObjectType::Warp(
-                if file_name.len() == 0 { WarpTo::Out } else { WarpTo::File(file_name) }, 
-                Activatable {
-                    requirements: if activation_requirements.len() == 0 {
-                        Vec::new()
-                    } else {
-                        activation_requirements
-                            .split(",").into_iter()
-                            .map(|activator_id|  activator_id.parse::<usize>().expect("Could not parse int"))
-                            .collect()
-                    },
-                    is_active: activation_requirements.len() == 0
-                }
-            ), ExtrasData {
-                respawn_detector: Some(_),
+                activation_requirements,
                 ..
-            } => GltfObjectType::RespawnDetector,
+            } => {
+                // If activation_requirements is none, then there are no activation requirements
+                let requirements = if let Some(requirements) = activation_requirements 
+                    { requirements } else { Vec::new() };
+                let warp_to = if file_name.len() == 0 { WarpTo::Out } else { WarpTo::File(file_name) };
+
+                // Only starts out active if there are no requirements
+                let is_active = requirements.len() == 0;
+
+                GltfObjectType::Warp(
+                    warp_to, 
+                    Activatable {
+                        requirements,
+                        is_active
+                    }
+                )
+            }, 
+            
+            // Sensor
+            ExtrasData {
+                sensor_channel: Some(sensor_channel),
+                shape: Some(shape),
+                sizes: Some(sizes),
+                ..
+            } => GltfObjectType::Sensor(
+                match sensor_channel.to_lowercase().as_str() {
+                    "warp" => SensorChannel::Warp,
+                    "respawn" => SensorChannel::Respawn,
+                    "button" => SensorChannel::Button,
+                    _ => SensorChannel::none()
+                }, 
+                shape, 
+                sizes 
+            ), 
+
+            // Movable and Fixed
+            ExtrasData { 
+                is_dynamic: Some(is_dynamic), 
+                shape: Some(shape),
+                sizes: Some(sizes),
+                material_type,
+                mass,
+                density,
+                .. 
+            } => {
+                let material_properties = if let Some(str) = material_type {
+                    MATERIAL_PROPERTIES.get(&str).unwrap_or(&DEFAULT_MATERIAL_PROPERTIES).clone()
+                } else {
+                    DEFAULT_MATERIAL_PROPERTIES
+                };
+
+                let mass_properties = if let Some(mass) = mass {
+                    ColliderMassProperties::Mass(mass)
+                } else if let Some(density) = density {
+                    ColliderMassProperties::Density(density)
+                } else {
+                    ColliderMassProperties::Mass(1.0)
+                };
+
+                if is_dynamic != 0 {
+                    GltfObjectType::Movable(shape, sizes, mass_properties, material_properties)
+                } else {
+                    GltfObjectType::Fixed(shape, sizes, material_properties)
+                }
+            },
+
+            // Regular object
             _ => GltfObjectType::Object
         }
     }

@@ -10,7 +10,7 @@ pub struct LevelStack(Vec<Level>);
 
 pub struct Level {
     pub handle: Option<Handle<Gltf>>,
-    pub file_name: &'static str
+    pub file_name: String
 }
 
 // It is assumed that LevelStack will always have at least one element in it
@@ -24,7 +24,19 @@ impl LevelStack {
     }
 
     pub fn from_level(file_name: &'static str) -> Self {
-        Self(vec![Level { handle: None, file_name }])
+        Self(vec![Level { handle: None, file_name: file_name.to_owned() }])
+    }
+
+    pub fn warp(&mut self, warp_to: &WarpTo) {
+        match warp_to {
+            WarpTo::File(file_name) => self.push(Level { 
+                handle: None, 
+                file_name: file_name.clone()
+            }), 
+            WarpTo::Out => {
+                self.pop();
+            }
+        }
     }
 
     pub fn get_current_level(&self) -> &Level {

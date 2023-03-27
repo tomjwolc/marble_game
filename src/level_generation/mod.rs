@@ -5,13 +5,11 @@ use bevy::gltf::Gltf;
 mod player;
 // mod respawn_detector;
 mod load_glb;
-mod warp;
 
 pub use {
     player::*,
     // respawn_detector::*,
-    load_glb::*,
-    warp::*
+    load_glb::*
 };
 
 pub struct LevelGenerationPlugin;

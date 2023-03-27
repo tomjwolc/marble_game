@@ -2,16 +2,23 @@ use super::*;
 
 #[derive(Bundle)]
 pub struct GravityBundle {
-    gravity: Gravity,
-    grivity_scale: GravityScale,
-    force: ExternalForce,
-    mass: ColliderMassProperties
+    pub gravity: Gravity,
+    pub grivity_scale: GravityScale,
+    pub force: ExternalForce,
+    pub mass: ColliderMassProperties
 }
 
 impl GravityBundle {
     pub fn from_mass(mass: f32) -> Self {
         Self {
             mass: ColliderMassProperties::Mass(mass),
+            ..Default::default()
+        }
+    }
+
+    pub fn from_density(density: f32) -> Self {
+        Self {
+            mass: ColliderMassProperties::Density(density),
             ..Default::default()
         }
     }

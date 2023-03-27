@@ -24,24 +24,24 @@ pub fn move_player(
     player_force.torque = Vec3::ZERO;
 
     if 
-        keys.pressed(KeyCode::W) && 
+        (keys.pressed(KeyCode::W) || keys.pressed(KeyCode::Up)) && 
         player_velocity.angvel.dot(left.normalize()) < MAX_ANGLE_SPEED 
     {
         player_force.torque += left;
     } else if 
-        keys.pressed(KeyCode::S) && 
+        (keys.pressed(KeyCode::S) || keys.pressed(KeyCode::Down)) && 
         player_velocity.angvel.dot((-left).normalize()) < MAX_ANGLE_SPEED 
     {
         player_force.torque -= left;
     } 
     
     if 
-        keys.pressed(KeyCode::D) && 
+        (keys.pressed(KeyCode::D) || keys.pressed(KeyCode::Right)) && 
         player_velocity.angvel.dot(forward.normalize()) < MAX_ANGLE_SPEED 
     {
         player_force.torque += forward;
     } else if 
-        keys.pressed(KeyCode::A) && 
+        (keys.pressed(KeyCode::A) || keys.pressed(KeyCode::Left)) && 
         player_velocity.angvel.dot((-forward).normalize()) < MAX_ANGLE_SPEED 
     {
         player_force.torque -= forward;

@@ -1,4 +1,5 @@
 use super::*;
+use bitmask_enum::*;
 
 #[derive(Component)]
 pub struct Player;
@@ -68,18 +69,12 @@ pub enum WarpTo {
     Out
 }
 
-#[derive(Component, Eq, PartialEq, Clone, Debug)]
+#[bitmask(u8)]
+#[derive(Component)]
 pub enum SensorChannel {
     Respawn,
     Warp,
-    Button,
-    All
-}
-
-impl SensorChannel {
-    pub fn in_channel(&self, other: &Self) -> bool {
-        self == other || *self == Self::All || *other == Self::All
-    }
+    Button
 }
 
 #[derive(Component)]

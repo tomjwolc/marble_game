@@ -10,6 +10,7 @@ pub struct WarpBundle {
 
     pub collider: Collider,
     pub pbr_bundle: PbrBundle,
+    pub in_game_entity: InGameEntity,
     pub jumpy: Jumpy
 }
 
@@ -22,6 +23,7 @@ impl Default for WarpBundle {
             warp_to: WarpTo::Out,
             collider: Collider::cylinder(0.25 * SCALE, 0.75 * SCALE),
             pbr_bundle: PbrBundle::default(),
+            in_game_entity: InGameEntity,
             jumpy: Jumpy
         }
     }
