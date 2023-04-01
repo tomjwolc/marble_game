@@ -30,7 +30,7 @@ pub fn check_sensor_events(
                         object_channel.contains(*sensor_channel)
                     }) 
                 {
-                    println!("channel: {:?}", sensor_channel);
+                    if DEBUG_SENSORS { println!("channel: {:?}", sensor_channel); }
 
                     match *sensor_channel {
                         SensorChannel::Respawn => respawn_events.send(RespawnEvent),

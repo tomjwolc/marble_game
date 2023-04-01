@@ -27,7 +27,9 @@ pub fn load_glb(
     mut activation_table: ResMut<ActivationTable>
 ) {
     if let Some(gltf) = gltf_assets.get(&level_stack.get_current_level().handle.as_ref().unwrap()) {
-        for node_handle in gltf.nodes.iter() {
+        if DEBUG_GLTF_LOAD { println!("\nScene:") };
+
+        for (name, node_handle) in gltf.named_nodes.iter() {
             /* Continues if the node asset does not exist, the node has no mesh, 
             or the mesh asset does not exist */
             extract!(continue; 
@@ -53,7 +55,7 @@ pub fn load_glb(
             let mut transform = node.transform.with_scale(SCALE * Vec3::ONE);
             transform.translation *= SCALE;
 
-            // println!("{:?} -- {:?}", object_type, transform);
+            if DEBUG_GLTF_LOAD { println!("  {}: {:?}\n    {:?}", name, object_type, transform); }
 
             match object_type {
                 GltfObjectType::Warp(

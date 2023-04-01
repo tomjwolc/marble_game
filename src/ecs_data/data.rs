@@ -4,6 +4,8 @@ pub use std::f32::consts::PI;
 use phf::phf_map;
 
 pub const DEBUG_MENUS: bool = false;
+pub const DEBUG_GLTF_LOAD: bool = false;
+pub const DEBUG_SENSORS: bool = false;
 
 // Scale for physics
 pub const SCALE: f32 = 10.0;
