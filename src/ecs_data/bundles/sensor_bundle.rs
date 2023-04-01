@@ -3,8 +3,6 @@ use super::*;
 #[derive(Bundle)]
 pub struct SensorBundle {
     collider: Collider,
-    rigid_body: RigidBody,
-    locked_axes: LockedAxes,
     transform_bundle: TransformBundle,
     sensor: Sensor,
     sensor_channel: SensorChannel,
@@ -42,8 +40,6 @@ impl Default for SensorBundle {
     fn default() -> Self {
         Self {
             collider: Collider::default(),
-            rigid_body: RigidBody::Dynamic,
-            locked_axes: LockedAxes::TRANSLATION_LOCKED,
             transform_bundle: TransformBundle::default(),
             sensor: Sensor,
             sensor_channel: SensorChannel::Respawn,

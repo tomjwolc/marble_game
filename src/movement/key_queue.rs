@@ -11,8 +11,6 @@ pub fn update_key_queue(
     keys: Res<Input<KeyCode>>,
     mut key_queue: ResMut<KeyQueue>
 ) {
-    println!("{:?}", key_queue);
-        
     for queued_key in QUEUED_KEYS.iter() {
         if keys.just_pressed(*queued_key) {
             key_queue.0.insert(*queued_key, 0);

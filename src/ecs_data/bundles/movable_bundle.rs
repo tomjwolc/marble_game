@@ -12,7 +12,6 @@ pub struct MovableBundle {
     velocity: Velocity,
     sensor_channel: SensorChannel,
     in_game_entity: InGameEntity,
-    pausable: Pausable,
     jumpy: Jumpy
 }
 
@@ -58,9 +57,8 @@ impl Default for MovableBundle {
             friction: MOVABLE_FRICTION,
             restitution: MOVABLE_RESTITUTION,
             velocity: Velocity::zero(),
-            sensor_channel: SensorChannel::Warp | SensorChannel::Button,
+            sensor_channel: SensorChannel::Warp | SensorChannel::Activator,
             in_game_entity: InGameEntity,
-            pausable: Pausable::default(),
             jumpy: Jumpy
         }
     }

@@ -1,14 +1,17 @@
 use super::*;
 use bitmask_enum::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Player;
 
 #[derive(Component)]
 pub struct PlayerSensor;
 
+#[derive(Component, Default)]
+pub struct InGameEntity;
+
 // Applied to all objects that can be jumped off of
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Jumpy;
 
 #[derive(Component, Debug)]
@@ -22,14 +25,6 @@ impl Default for CameraDir {
         Self { horizontal_direction: Vec3::Z, pitch: 0.0 }
     }
 }
-
-// Applied to any physics objects that need to stop during pause screen
-#[derive(Default, Component)]
-pub struct Pausable {
-    pub velocity: Velocity,
-    pub prev_rigid_body: Option<RigidBody>
-}
-
 
 // --------------------------- Gravity
 #[derive(Component, Clone)]
@@ -45,7 +40,7 @@ pub enum GravityType {
 #[derive(Component)]
 pub struct GravityChangeSensor(pub Vec3);
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct NotGravityWell;
 
 // For doors, warps, etc.
@@ -57,9 +52,17 @@ pub struct Activatable {
 
 // For buttons, levers, timers, etc.
 #[derive(Component, Clone, Debug)]
-pub struct Activator {
-    pub id: usize,
-    pub is_active: bool
+pub struct Activator(pub usize);
+
+#[derive(Component)]
+pub enum ActivatorType {
+    Button {
+        initial_position: Vec3
+    },
+    Timer {
+        duration: f32,
+        seconds_left: f32
+    }
 }
 
 // Describes where the warp will take you
@@ -74,8 +77,5 @@ pub enum WarpTo {
 pub enum SensorChannel {
     Respawn,
     Warp,
-    Button
+    Activator
 }
-
-#[derive(Component)]
-pub struct RespawnSensor;

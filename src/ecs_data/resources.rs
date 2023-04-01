@@ -6,6 +6,9 @@ use super::*;
 pub struct DefaultMaterial(pub Handle<StandardMaterial>);
 
 #[derive(Resource)]
+pub struct ActivationTable(pub Vec<bool>);
+
+#[derive(Resource)]
 pub struct LevelStack(Vec<Level>);
 
 pub struct Level {

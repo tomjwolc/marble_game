@@ -130,17 +130,17 @@ impl Plugin for MenuPlugin {
 
         // Win menu
         StockMenu::new_overlay(
-            "You Won!!",
+            "-- Complete --",
             vec![
                 Button::new(
-                    "Replay",
+                    "Continue",
                     vec![KeyCode::R, KeyCode::Return],
                     pass_schedule!(move |
                         mut menu_scheduler: ResMut<MenuScheduler>,
                         mut state: ResMut<NextState<AppState>>
                     | {
-                        menu_scheduler.set_menu_type(MenuType::None);
-                        state.set(AppState::None);
+                        menu_scheduler.set_menu_type(MenuType::Loading);
+                        state.set(AppState::MenuScreen);
                     })
                 ), Button::new(
                     "Quit",

@@ -48,7 +48,8 @@ pub fn move_player(
         player_force.torque -= forward;
     }
 
-    let is_not_falling = gravity.dot(player_velocity.linvel) <= 0.0;
+    let is_not_falling = gravity.normalize().dot(player_velocity.linvel.normalize()) <= 
+        (PI * STEEPEST_JUMP_ANGLE / 180.0).cos();
 
     if can_jump.0 && is_not_falling && key_queue.0.remove(&KeyCode::Space).is_some() {
         player_impulse.impulse = JUMP_IMPULSE * -gravity.normalize();

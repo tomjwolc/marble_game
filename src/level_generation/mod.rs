@@ -23,16 +23,10 @@ impl Plugin for LevelGenerationPlugin {
 
         app 
             .insert_resource(LevelStack::from_level("test_level"))
-            // .add_system(check_detection.run_if(AppState::in_game))
+            .insert_resource(ActivationTable(vec![false; 10]))
         ;
     }
 }
-
-#[derive(Component)]
-pub struct Platform;
-
-#[derive(Component)]
-pub struct InGameEntity;
 
 fn despawn_game_entities(
     entities_query: Query<Entity, With<InGameEntity>>,

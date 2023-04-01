@@ -41,19 +41,26 @@ pub const ANGULAR_DAMPING: f32 = 0.5;
 
 // Marble jump sensor
 pub const JUMP_SENSOR_OFFSET: f32 = 0.1 * SCALE;
+pub const STEEPEST_JUMP_ANGLE: f32 = 45.0; // degrees
 
 // Warp
 pub const WARP_FRICTION: f32 = 0.5;
 pub const WARP_RESTITUTION: f32 = 0.1;
 pub const WARP_SENSOR_HEIGHT: f32 = 0.3 * SCALE;
 
+// Button
+pub const BUTTON_RADIUS: f32 = 2.2938 / 2.0;
+pub const BUTTON_HEIGHT: f32 = 0.152148;
+pub const BUTTON_SENSOR_HEIGHT: f32 = 0.02 * SCALE;
+pub const BUTTON_COMPRESS_DEPTH: f32 = 0.2 * SCALE;
+
+// sensor
+pub const SENSOR_THICKNESS: f32 = 1.0;
+
 // movable
 pub const MOVABLE_FRICTION: Friction = Friction { coefficient: 0.5, combine_rule: FRICTION_COMBINE_RULE };
 pub const MOVABLE_RESTITUTION: Restitution = Restitution { coefficient: 0.5, combine_rule: RESTITUTION_COMBINE_RULE };
 
-
-// sensor
-pub const SENSOR_THICKNESS: f32 = 1.0;
 
 // In game
 pub const AMBIENT_COLOR: Color = color!(0xF5FBEF);
@@ -91,7 +98,7 @@ pub static MATERIAL_PROPERTIES: phf::Map<&'static str, MaterialProperties> = phf
     },
     "ice" => MaterialProperties { 
         restitution: Restitution { coefficient: 0.05,  combine_rule: RESTITUTION_COMBINE_RULE    },
-        friction:    Friction    { coefficient: 0.0, combine_rule: FRICTION_COMBINE_RULE },
+        friction:    Friction    { coefficient: 0.05, combine_rule: FRICTION_COMBINE_RULE },
     }
 };
 

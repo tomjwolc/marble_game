@@ -11,7 +11,6 @@ pub struct MarbleBundle {
     velocity: Velocity,
     gravity: GravityBundle,
     active_events: ActiveEvents,
-    pausable: Pausable,
     pbr_bundle: PbrBundle
 }
 
@@ -36,7 +35,6 @@ impl MarbleBundle {
             velocity,
             gravity: GravityBundle::from_mass(mass),
             active_events: ActiveEvents::COLLISION_EVENTS,
-            pausable: Pausable::default(),
             pbr_bundle: PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::UVSphere {
                     radius,
@@ -70,7 +68,6 @@ impl Default for MarbleBundle {
             velocity: Velocity::zero(),
             gravity: GravityBundle::from_mass(3.0 * MARBLE_MASS),
             active_events: ActiveEvents::COLLISION_EVENTS,
-            pausable: Pausable::default(),
             pbr_bundle: PbrBundle::default()
         }
     }
