@@ -2,94 +2,98 @@ use super::*;
 
 pub fn check_sensor_events(
     rapier_context: Res<RapierContext>,
-    sensor_entity_query: Query<(Entity, &SensorChannel, Option<&WarpTo>, Option<&Activator>), With<Sensor>>,
-    object_entity_query: Query<(Entity, &SensorChannel), Without<Sensor>>,
-    mut respawn_events: EventWriter<RespawnEvent>,
-    mut warp_events: EventWriter<WarpEvent>,
-    mut activator_events: EventWriter<ActivatorEvent>
+    mut sensor_entity_query: Query<(Entity, &SensorChannel, &mut SensorEvents), With<Sensor>>,
+    mut object_entity_query: Query<(Entity, &SensorChannel, &mut ObjectEvents), Without<Sensor>>,
 ) {
-    let object_entities: Vec<(Entity, &SensorChannel)> = object_entity_query.iter().collect();
+    let mut event_id = 0;
 
     for (
-        sensor_entity, 
-        sensor_channel,
-        warp_to_option,
-        activator_option
-    ) in sensor_entity_query.iter() {
-        for (
-            collider1, 
-            collider2, 
-            is_intersecting
-        ) in rapier_context.intersections_with(sensor_entity) {
-            //     If the colliders are intersecting, one of the colliders is a 
-            // object_entity and the colliders share a sensor channel
-            if is_intersecting {
-                if let Some( &(object_entity, _) ) = object_entities
-                    .iter().find(|(entity, object_channel)| {
-                        (*entity == collider1 || *entity == collider2) && 
-                        object_channel.contains(*sensor_channel)
-                    }) 
-                {
-                    if DEBUG_SENSORS { println!("channel: {:?}", sensor_channel); }
+        object_entity, 
+        object_sensor_channels, 
+        mut object_events
+    ) in object_entity_query.iter_mut() {
+        *object_events = ObjectEvents::new();
 
-                    match *sensor_channel {
-                        SensorChannel::Respawn => respawn_events.send(RespawnEvent),
-                        SensorChannel::Warp => if let Some(warp_to) = warp_to_option {
-                            warp_events.send(WarpEvent { 
-                                warp_to: warp_to.clone(), 
-                                object_entity 
-                            });
-                        },
-                        SensorChannel::Activator => if let Some(&Activator(id)) = activator_option {
-                            activator_events.send(ActivatorEvent(id));
-                        },
-                        _ => {}
-                    }
-                };
+        for (
+            sensor_entity, 
+            sensor_channel,
+            mut sensor_events,
+        ) in sensor_entity_query.iter_mut() {
+            let is_intersecting = object_sensor_channels.contains(*sensor_channel) &&
+                rapier_context.intersection_pair(sensor_entity, object_entity) == Some(true);
+
+            if is_intersecting {
+                object_events.get_mut(*sensor_channel).insert(event_id);
+                sensor_events.ongoing_events.insert(event_id);
+
+                event_id += 1;
             }
         }
+
+        // if DEBUG_SENSORS && object_sensor_trigger.is_active && !object_sensor_trigger.was_prev_active {
+        //     println!("{:?} has entered {:?}", object_entity, object_sensor_trigger);
+        // } else if DEBUG_SENSORS && !object_sensor_trigger.is_active && object_sensor_trigger.was_prev_active {
+        //     println!("{:?}  has exited {:?}", object_entity, object_sensor_trigger);
+        // }
     }
 }
 
 pub fn respawn_events(
-    mut respawn_events: EventReader<RespawnEvent>,
+    player_events_query: Query<&ObjectEvents, With<Player>>,
     mut menu_scheduler: ResMut<MenuScheduler>,
     mut state: ResMut<NextState<AppState>>
 ) {
-    if respawn_events.len() > 0 {
-        menu_scheduler.set_menu_type(MenuType::DeathScreen);
-        state.set(AppState::OverlayMenu);
-
-        respawn_events.clear();
-    }
-}
-
-pub fn warp_events(
-    mut warp_events: EventReader<WarpEvent>,
-    mut level_stack: ResMut<LevelStack>,
-    mut menu_scheduler: ResMut<MenuScheduler>,
-    mut state: ResMut<NextState<AppState>>,
-    player_entity_query: Query<Entity, With<Player>>
-) {
-    let Ok(player_entity) = player_entity_query.get_single() else { return };
-
-    for warp_event in warp_events.iter() {
-        if player_entity == warp_event.object_entity {
-            level_stack.warp(&warp_event.warp_to);
-
-            menu_scheduler.set_menu_type(MenuType::WinScreen);
+    if let Ok(object_events) = player_events_query.get_single() {
+        if object_events.get(SensorChannel::Respawn).len() > 0 {
+            menu_scheduler.set_menu_type(MenuType::DeathScreen);
             state.set(AppState::OverlayMenu);
         }
     }
 }
 
+pub fn warp_events(
+    warp_sensors: Query<(&WarpTo, &SensorEvents), With<Sensor>>,
+    mut level_stack: ResMut<LevelStack>,
+    mut menu_scheduler: ResMut<MenuScheduler>,
+    mut state: ResMut<NextState<AppState>>,
+) {
+    for (warp_to, SensorEvents { ongoing_events, .. }) in warp_sensors.iter() {
+        if ongoing_events.len() > 0 {
+            level_stack.warp(warp_to);
+
+            menu_scheduler.set_menu_type(MenuType::WinScreen);
+            state.set(AppState::OverlayMenu);
+        }   
+    }
+}
+
 pub fn activator_events(
-    mut activator_events: EventReader<ActivatorEvent>,
+    activator_query: Query<(&Activator, &SensorEvents)>,
     mut activation_table: ResMut<ActivationTable>
 ) {
     activation_table.0.iter_mut().for_each(|b| *b = false);
 
-    for ActivatorEvent(id) in activator_events.iter() {
-        activation_table.0[*id] = true;
+    for (Activator(id), SensorEvents { ongoing_events, .. }) in activator_query.iter() {
+        activation_table.0[*id] = ongoing_events.len() > 0;
+    }
+}
+
+pub fn gravity_sensor_events(
+    gravity_sensor_events_query: Query<(&GravitySensorDirection, &SensorEvents)>,
+    mut object_events_query: Query<(&mut Gravity, &ObjectEvents), Without<Sensor>>
+) {
+    for (mut gravity, object_events) in object_events_query.iter_mut() {
+        let object_event_id_set = object_events.get(SensorChannel::Gravity);
+
+        *gravity = if object_event_id_set.len() > 0 {
+            Gravity(
+                gravity_sensor_events_query.iter().find(|(_, sensor_events)| {
+                    !sensor_events.ongoing_events.is_disjoint(object_event_id_set)
+                }).expect("Could not find the sensor with the same event id in gravity_sensor_events").0.0,
+                GravityType::Constant
+            )
+        } else {
+            Gravity(-Vec3::Y, GravityType::Planets)
+        };
     }
 }

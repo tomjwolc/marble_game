@@ -4,11 +4,11 @@ pub use std::f32::consts::PI;
 use phf::phf_map;
 
 pub const DEBUG_MENUS: bool = false;
-pub const DEBUG_GLTF_LOAD: bool = false;
-pub const DEBUG_SENSORS: bool = false;
+pub const DEBUG_GLTF_LOAD: bool = true;
+pub const DEBUG_SENSORS: bool = true;
 
 // Scale for physics
-pub const SCALE: f32 = 10.0;
+pub const SCALE: f32 = 100.0;
 
 // Gravity
 pub const GRAVITATIONAL_CONSTANT: f32 = 0.01;
@@ -24,7 +24,8 @@ pub const RESTITUTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineR
 pub const MAX_ANGLE: f32 = 0.6 * std::f32::consts::PI / 2.0;
 pub const SENSITIVITY: f32 = 100.0;
 pub const CAMERA_ORBIT_RADIUS: f32 = SCALE * 6.0;
-pub const SURFACE_OFFSET: f32 = 0.1;
+pub const SURFACE_OFFSET: f32 = 0.1 * SCALE;
+pub const ORBIT_OFFSET: f32 = MARBLE_RADIUS;
 
 // keypress que
 pub const  KEY_QUEUE_LIFESPAN: usize = 10;
@@ -39,7 +40,7 @@ pub const JUMP_IMPULSE: f32 = SCALE * 5.0;
 pub const MARBLE_FRICTION: f32 = 0.8;
 pub const MARBLE_GRAVITY: f32 = SCALE * 1.0;
 pub const MARBLE_RESTITUTION: f32 = 0.1;
-pub const ANGULAR_DAMPING: f32 = 0.5;
+pub const ANGULAR_DAMPING: f32 = 1.0;
 
 // Marble jump sensor
 pub const JUMP_SENSOR_OFFSET: f32 = 0.1 * SCALE;

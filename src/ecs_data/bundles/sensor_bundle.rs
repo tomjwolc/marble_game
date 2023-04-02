@@ -6,6 +6,7 @@ pub struct SensorBundle {
     transform_bundle: TransformBundle,
     sensor: Sensor,
     sensor_channel: SensorChannel,
+    sensor_events: SensorEvents,
     in_game_entity: InGameEntity
 }
 
@@ -43,6 +44,9 @@ impl Default for SensorBundle {
             transform_bundle: TransformBundle::default(),
             sensor: Sensor,
             sensor_channel: SensorChannel::Respawn,
+            sensor_events: SensorEvents { 
+                ongoing_events: HashSet::new()
+            },
             in_game_entity: InGameEntity
         }
     }

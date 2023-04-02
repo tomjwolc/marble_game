@@ -6,14 +6,16 @@ pub struct FixedBundle {
     collider: Collider,
     friction: Friction,
     restitution: Restitution,
+    mass: ColliderMassProperties,
     in_game_entity: InGameEntity,
     jumpy: Jumpy
 }
 
 impl FixedBundle {
-    pub fn with_properties(mut self, material_properties: MaterialProperties) -> Self {
+    pub fn with_properties(mut self, mass_properties: ColliderMassProperties, material_properties: MaterialProperties) -> Self {
         self.friction = material_properties.friction;
         self.restitution = material_properties.restitution;
+        self.mass = mass_properties;
 
         self
     }
@@ -47,6 +49,7 @@ impl Default for FixedBundle {
             collider: Collider::default(),
             friction: MOVABLE_FRICTION,
             restitution: MOVABLE_RESTITUTION,
+            mass: ColliderMassProperties::Mass(1.0),
             in_game_entity: InGameEntity,
             jumpy: Jumpy
         }

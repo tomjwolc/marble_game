@@ -66,13 +66,15 @@ pub fn update_camera(
         pitch
     ).mul_vec3(horizontal_direction);
 
+    let orbit_target = player_transform.translation + (-gravity) * ORBIT_OFFSET;
+
     // Updates the position of the camera
     camera_transform.translation = 
-        (CAMERA_ORBIT_RADIUS * direction) + player_transform.translation;
+        (CAMERA_ORBIT_RADIUS * direction) + orbit_target;
 
     // Checks if the camera is inside a collider and moves it up
     if let Some((_, distance)) = rapier_context.cast_ray(
-        player_transform.translation, 
+        orbit_target, 
         (camera_transform.translation - player_transform.translation).normalize(), 
         CAMERA_ORBIT_RADIUS, 
         false, 
@@ -82,12 +84,12 @@ pub fn update_camera(
             .exclude_sensors()
     ) {
         camera_transform.translation = 
-            ((distance - SURFACE_OFFSET) * direction) + player_transform.translation;
+            ((distance - SURFACE_OFFSET) * direction) + orbit_target;
     }
 
     // Rotate camera to face player
     *camera_transform = camera_transform
-        .looking_at(player_transform.translation, -gravity);
+        .looking_at(orbit_target, -gravity);
 }
 
 pub fn lock_cursor(

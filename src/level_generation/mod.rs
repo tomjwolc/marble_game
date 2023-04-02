@@ -4,10 +4,12 @@ use bevy::gltf::Gltf;
 
 mod player;
 mod load_glb;
+mod lighting;
 
 pub use {
     player::*,
-    load_glb::*
+    load_glb::*,
+    lighting::*
 };
 
 pub struct LevelGenerationPlugin;
@@ -17,6 +19,7 @@ impl Plugin for LevelGenerationPlugin {
         //     Assumed that the gltf/glb asset will always be loaded 
         // when the state is changed to InGame
         add_spawning_system!(app, load_glb);
+        add_spawning_system!(app, spawn_lighting);
         add_spawning_system!(app, spawn_player);
         add_spawning_system!(app, reset_camera);
         add_despawning_system!(app, despawn_game_entities);

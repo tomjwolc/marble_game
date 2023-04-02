@@ -37,11 +37,11 @@ pub enum GravityType {
     AntiPlanets     // Gravitation pull away from masses
 }
 
-#[derive(Component)]
-pub struct GravityChangeSensor(pub Vec3);
-
 #[derive(Component, Default)]
 pub struct NotGravityWell;
+
+#[derive(Component)]
+pub struct GravitySensorDirection(pub Vec3);
 
 // For doors, warps, etc.
 #[derive(Component, Clone, Debug)]
@@ -72,10 +72,42 @@ pub enum WarpTo {
     Out
 }
 
-#[bitmask(u8)]
+#[derive(Component, Default, Debug, Clone)]
+pub struct SensorEvents {
+    pub ongoing_events: HashSet<usize>
+}
+
 #[derive(Component)]
+pub struct ObjectEvents {
+    pub ongoing_events: Vec<HashSet<usize>>
+}
+
+impl ObjectEvents {
+    pub fn new() -> Self {
+        ObjectEvents { 
+            ongoing_events: [(); NUM_SENSOR_CHANNELS].iter().map(|_| HashSet::new()).collect()
+        }
+    }
+
+    pub fn get(&self, sensor_channel: SensorChannel) -> &HashSet<usize> {
+        &self.ongoing_events[(sensor_channel.bits() as f32).log2() as usize]
+    }
+
+    pub fn get_mut(&mut self, sensor_channel: SensorChannel) -> &mut HashSet<usize> {
+        &mut self.ongoing_events[(sensor_channel.bits() as f32).log2() as usize]
+    }
+}
+
+#[derive(Component)]
+pub struct SensorEventId(pub usize);
+
+pub const NUM_SENSOR_CHANNELS: usize = 4;
+
+#[bitmask(u8)]
+#[derive(Component, Default)]
 pub enum SensorChannel {
     Respawn,
     Warp,
-    Activator
-}
+    Activator,
+    Gravity
+} // when adding to this increment the size of the triggeredChannels array

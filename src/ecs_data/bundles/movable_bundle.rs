@@ -10,7 +10,8 @@ pub struct MovableBundle {
     friction: Friction,
     restitution: Restitution,
     velocity: Velocity,
-    sensor_channel: SensorChannel,
+    sensor_channels: SensorChannel,
+    object_events: ObjectEvents,
     in_game_entity: InGameEntity,
     jumpy: Jumpy
 }
@@ -20,6 +21,12 @@ impl MovableBundle {
         self.friction = material_properties.friction;
         self.restitution = material_properties.restitution;
         self.gravity_bundle.mass = mass_properties;
+
+        self
+    }
+
+    pub fn with_channels(mut self, sensor_channels: SensorChannel) -> Self {
+        self.sensor_channels = sensor_channels;
 
         self
     }
@@ -57,7 +64,8 @@ impl Default for MovableBundle {
             friction: MOVABLE_FRICTION,
             restitution: MOVABLE_RESTITUTION,
             velocity: Velocity::zero(),
-            sensor_channel: SensorChannel::Warp | SensorChannel::Activator,
+            sensor_channels: SensorChannel::Respawn.not(),
+            object_events: ObjectEvents::new(),
             in_game_entity: InGameEntity,
             jumpy: Jumpy
         }

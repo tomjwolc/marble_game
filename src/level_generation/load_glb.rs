@@ -104,15 +104,20 @@ pub fn load_glb(
                     ));
                 },
 
-                GltfObjectType::Sensor(
+                GltfObjectType::Sensor{
                     sensor_channel, 
                     shape, 
-                    sizes
-                ) => {
-                    commands.spawn(SensorBundle::from_shape(
+                    sizes,
+                    gravity_direction_option
+                } => {
+                    let mut entity_commands = commands.spawn(SensorBundle::from_shape(
                         shape, sizes, &mesh_assets, 
                         &mesh0
                     ).with_transform(transform).with_sensor_channel(sensor_channel));
+
+                    if let Some(gravity_direction) = gravity_direction_option {
+                        entity_commands.insert(GravitySensorDirection(SCALE * Vec3::from_array(gravity_direction)));
+                    }
                 },
 
                 GltfObjectType::Movable(
@@ -135,6 +140,7 @@ pub fn load_glb(
                 GltfObjectType::Fixed(
                     shape, 
                     sizes, 
+                    mass_properties,
                     material_properties
                 ) => {
                     commands.spawn(FixedBundle::from_shape(
@@ -145,7 +151,7 @@ pub fn load_glb(
                         material: material0,
                         transform,
                         ..Default::default()
-                    }).with_properties(material_properties));
+                    }).with_properties(mass_properties, material_properties));
                 },
 
                 _ => {
@@ -186,6 +192,8 @@ struct ExtrasData {
         sizes: Option<Vec<f32>>,
     // sensor info
         sensor_channel: Option<String>,
+    // optional sensor info
+        gravity_direction: Option<[f32; 3]>,
     // object info
         // blender doesn't support bool's as custom properties >:(
         is_dynamic: Option<i8>,
@@ -200,9 +208,14 @@ struct ExtrasData {
 enum GltfObjectType {
     Warp(WarpTo, Activatable),
     Activator(Activator),
-    Sensor(SensorChannel, String, Vec<f32>),
+    Sensor{
+        sensor_channel: SensorChannel, 
+        shape: String, 
+        sizes: Vec<f32>,
+        gravity_direction_option: Option<[f32; 3]>
+    },
     Movable(String, Vec<f32>, ColliderMassProperties, MaterialProperties),
-    Fixed(String, Vec<f32>, MaterialProperties),
+    Fixed(String, Vec<f32>, ColliderMassProperties, MaterialProperties),
     Object
 }
 
@@ -247,17 +260,20 @@ impl From<ExtrasData> for GltfObjectType {
                 sensor_channel: Some(sensor_channel),
                 shape: Some(shape),
                 sizes: Some(sizes),
+                gravity_direction: gravity_direction_option,
                 ..
-            } => GltfObjectType::Sensor(
-                match sensor_channel.to_lowercase().as_str() {
+            } => GltfObjectType::Sensor{
+                sensor_channel: match sensor_channel.to_lowercase().as_str() {
                     "warp" => SensorChannel::Warp,
                     "respawn" => SensorChannel::Respawn,
                     "activator" => SensorChannel::Activator,
+                    "gravity" => SensorChannel::Gravity,
                     _ => SensorChannel::none()
                 }, 
                 shape, 
-                sizes 
-            ), 
+                sizes,
+                gravity_direction_option
+            }, 
 
             // Movable and Fixed
             ExtrasData { 
@@ -273,7 +289,7 @@ impl From<ExtrasData> for GltfObjectType {
                     MaterialProperties::from(material_type, is_dynamic != 0);
 
                 let mass_properties = if let Some(mass) = mass {
-                    ColliderMassProperties::Mass(mass)
+                    ColliderMassProperties::Mass(mass * SCALE)
                 } else if let Some(density) = density {
                     ColliderMassProperties::Density(density)
                 } else {
@@ -283,7 +299,7 @@ impl From<ExtrasData> for GltfObjectType {
                 if is_dynamic != 0 {
                     GltfObjectType::Movable(shape, sizes, mass_properties, material_properties)
                 } else {
-                    GltfObjectType::Fixed(shape, sizes, material_properties)
+                    GltfObjectType::Fixed(shape, sizes, mass_properties, material_properties)
                 }
             },
 

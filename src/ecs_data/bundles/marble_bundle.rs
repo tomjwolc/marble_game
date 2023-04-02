@@ -2,16 +2,17 @@ use super::*;
 
 #[derive(Bundle)]
 pub struct MarbleBundle {
+    pbr_bundle: PbrBundle,
+    collider: Collider,
     friction: Friction,
     restitution: Restitution,
 
-    in_game_entity: InGameEntity, 
-    collider: Collider,
+    in_game_entity: InGameEntity,
     rigid_body: RigidBody, 
     velocity: Velocity,
     gravity: GravityBundle,
     active_events: ActiveEvents,
-    pbr_bundle: PbrBundle
+    sensor_trigger: SensorTrigger
 }
 
 impl MarbleBundle {
@@ -45,7 +46,8 @@ impl MarbleBundle {
                 material,
                 transform,
                 ..default()
-            }
+            },
+            ..Default::default()
         }
     }
 
@@ -68,7 +70,8 @@ impl Default for MarbleBundle {
             velocity: Velocity::zero(),
             gravity: GravityBundle::from_mass(3.0 * MARBLE_MASS),
             active_events: ActiveEvents::COLLISION_EVENTS,
-            pbr_bundle: PbrBundle::default()
+            pbr_bundle: PbrBundle::default(),
+            sensor_trigger: SensorTrigger::from_channels(SensorChannel::all())
         }
     }
 }
