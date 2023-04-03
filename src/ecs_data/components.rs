@@ -5,7 +5,7 @@ use bitmask_enum::*;
 pub struct Player;
 
 #[derive(Component)]
-pub struct PlayerSensor;
+pub struct CanJumpSensor;
 
 #[derive(Component, Default)]
 pub struct InGameEntity;
@@ -73,35 +73,38 @@ pub enum WarpTo {
 }
 
 #[derive(Component, Default, Debug, Clone)]
-pub struct SensorEvents {
-    pub ongoing_events: HashSet<usize>
+pub struct SensorEvents(pub HashSet<(Entity, Entity)>, pub HashSet<(Entity, Entity)>);
+
+impl SensorEvents {
+    pub fn new() -> Self {
+        SensorEvents(HashSet::new(), HashSet::new())
+    }
 }
 
-#[derive(Component)]
-pub struct ObjectEvents {
-    pub ongoing_events: Vec<HashSet<usize>>
-}
+#[derive(Component, Debug)]
+pub struct ObjectEvents(pub Vec<HashSet<(Entity, Entity)>>, pub Vec<HashSet<(Entity, Entity)>>);
 
 impl ObjectEvents {
     pub fn new() -> Self {
-        ObjectEvents { 
-            ongoing_events: [(); NUM_SENSOR_CHANNELS].iter().map(|_| HashSet::new()).collect()
-        }
+        ObjectEvents( 
+            [(); NUM_SENSOR_CHANNELS].iter().map(|_| HashSet::new()).collect(),
+            [(); NUM_SENSOR_CHANNELS].iter().map(|_| HashSet::new()).collect()
+        )
     }
 
-    pub fn get(&self, sensor_channel: SensorChannel) -> &HashSet<usize> {
-        &self.ongoing_events[(sensor_channel.bits() as f32).log2() as usize]
+    pub fn get(&self, sensor_channel: SensorChannel) -> &HashSet<(Entity, Entity)> {
+        &self.0[(sensor_channel.bits() as f32).log2() as usize]
     }
 
-    pub fn get_mut(&mut self, sensor_channel: SensorChannel) -> &mut HashSet<usize> {
-        &mut self.ongoing_events[(sensor_channel.bits() as f32).log2() as usize]
+    pub fn get_mut(&mut self, sensor_channel: SensorChannel) -> &mut HashSet<(Entity, Entity)> {
+        &mut self.0[(sensor_channel.bits() as f32).log2() as usize]
     }
 }
 
 #[derive(Component)]
 pub struct SensorEventId(pub usize);
 
-pub const NUM_SENSOR_CHANNELS: usize = 4;
+pub const NUM_SENSOR_CHANNELS: usize = 5;
 
 #[bitmask(u8)]
 #[derive(Component, Default)]
@@ -109,5 +112,19 @@ pub enum SensorChannel {
     Respawn,
     Warp,
     Activator,
-    Gravity
+    Gravity,
+    CanJump
 } // when adding to this increment the size of the triggeredChannels array
+
+impl std::fmt::Display for SensorChannel { 
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self.bits() {
+            1  => "Respawn",
+            2  => "Warp",
+            4  => "Activator",
+            8  => "Gravity",
+            16 => "CanJump",
+            _  => "Combination"
+        })
+    }
+}

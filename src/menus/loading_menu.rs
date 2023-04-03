@@ -1,5 +1,3 @@
-use bevy::gltf::Gltf;
-
 use super::*;
 
 pub fn setup_loading_screen(
@@ -36,21 +34,4 @@ pub fn remove_loading_screen(
     for entity in entities_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
-}
-
-pub fn check_for_load(
-    level_stack: Res<LevelStack>,
-    gltf_assets: Res<Assets<Gltf>>,
-    mut menu_scheduler: ResMut<MenuScheduler>,
-    mut next_state: ResMut<NextState<AppState>>
-) {
-    ignore_extract!(
-        Some( gltf_handle ) = &level_stack.get_current_level().handle;
-        Some( _ ) = gltf_assets.get(&gltf_handle)
-    );
-
-    if DEBUG_MENUS { println!("Loading Complete") }
-
-    menu_scheduler.set_menu_type(MenuType::None);
-    next_state.set(AppState::None);
 }

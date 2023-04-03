@@ -17,39 +17,29 @@ pub struct MovableBundle {
 }
 
 impl MovableBundle {
-    pub fn with_properties(mut self, mass_properties: ColliderMassProperties, material_properties: MaterialProperties) -> Self {
-        self.friction = material_properties.friction;
-        self.restitution = material_properties.restitution;
-        self.gravity_bundle.mass = mass_properties;
-
-        self
-    }
-
-    pub fn with_channels(mut self, sensor_channels: SensorChannel) -> Self {
-        self.sensor_channels = sensor_channels;
-
-        self
-    }
-}
-
-impl FromShape for MovableBundle {
-    fn from_collider(collider: Collider) -> Self {
+    pub fn new(
+        mesh_handle: Handle<Mesh>,
+        material_handle: Handle<StandardMaterial>,
+        transform: Transform,
+        collider: Collider,
+        sensor_channels: SensorChannel,
+        mass: ColliderMassProperties,
+        material_properties: MaterialProperties
+    ) -> Self {
         Self {
+            pbr_bundle: PbrBundle {
+                mesh: mesh_handle,
+                material: material_handle,
+                transform,
+                ..Default::default()
+            },
             collider,
+            gravity_bundle: GravityBundle { mass, ..default() },
+            friction: material_properties.friction,
+            restitution: material_properties.restitution,
+            sensor_channels,
             ..Default::default()
         }
-    }
-
-    fn with_transform(mut self, transform: Transform) -> Self {
-        self.pbr_bundle.transform = transform;
-
-        self
-    }
-
-    fn with_pbr_bundle(mut self, pbr_bundle: PbrBundle) -> Self {
-        self.pbr_bundle = pbr_bundle;
-
-        self
     }
 }
 

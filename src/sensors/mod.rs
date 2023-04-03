@@ -18,7 +18,8 @@ impl Plugin for SensorPlugin {
                 respawn_events,
                 warp_events,
                 activator_events,
-                gravity_sensor_events
+                gravity_sensor_events,
+                can_jump_sensor_events
             ).after(check_sensor_events).distributive_run_if(AppState::in_game))
             .add_system(activate_activatables.after(activator_events).run_if(AppState::in_game))
             .add_systems((

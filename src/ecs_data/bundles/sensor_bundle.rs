@@ -11,29 +11,17 @@ pub struct SensorBundle {
 }
 
 impl SensorBundle {
-    pub fn with_sensor_channel(mut self, sensor_channel: SensorChannel) -> Self {
-        self.sensor_channel = sensor_channel;
-
-        self
-    }
-}
-
-impl FromShape for SensorBundle {
-    fn from_collider(collider: Collider) -> Self {
-        Self { 
-            collider, 
-            ..Default::default() 
+    pub fn new(
+        collider: Collider,
+        transform: Transform,
+        sensor_channel: SensorChannel
+    ) -> Self {
+        Self {
+            collider,
+            transform_bundle: TransformBundle::from_transform(transform),
+            sensor_channel,
+            ..Default::default()
         }
-    }
-
-    fn with_transform(mut self, transform: Transform) -> Self {
-        self.transform_bundle = TransformBundle::from_transform(transform);
-
-        self
-    }
-
-    fn with_pbr_bundle(self, _: PbrBundle) -> Self {
-        self
     }
 }
 
@@ -44,9 +32,7 @@ impl Default for SensorBundle {
             transform_bundle: TransformBundle::default(),
             sensor: Sensor,
             sensor_channel: SensorChannel::Respawn,
-            sensor_events: SensorEvents { 
-                ongoing_events: HashSet::new()
-            },
+            sensor_events: SensorEvents::new(),
             in_game_entity: InGameEntity
         }
     }

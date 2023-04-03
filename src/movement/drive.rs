@@ -58,7 +58,7 @@ pub fn move_player(
 
 pub fn move_sensor(
     player_transform_query: Query<(&Transform, &Gravity), With<Player>>,
-    mut sensor_transform_query: Query<&mut Transform, (With<PlayerSensor>, Without<Player>)>
+    mut sensor_transform_query: Query<&mut Transform, (With<CanJumpSensor>, Without<Player>)>
 ) {
     log_extract!(move_sensor:
         Ok((player_transform, &Gravity(gravity, _))) = player_transform_query.get_single();
@@ -67,23 +67,4 @@ pub fn move_sensor(
 
     sensor_transform.translation = 
         player_transform.translation + JUMP_SENSOR_OFFSET * gravity.normalize();
-}
-
-pub fn update_can_jump(
-    rapier_context: Res<RapierContext>,
-    player_sensor_entity_query: Query<Entity, With<PlayerSensor>>,
-    jumpy_entity_query: Query<Entity, (With<Jumpy>, Without<PlayerSensor>)>,
-    mut can_jump: ResMut<CanJump>
-) {
-    ignore_extract!(Ok(sensor_entity) = player_sensor_entity_query.get_single());
-
-    can_jump.0 = false;
-    
-    for (collider1, collider2, is_intersecting) in rapier_context.intersections_with(sensor_entity) {
-        if is_intersecting {
-            for jumpy in jumpy_entity_query.iter() {
-                can_jump.0 = can_jump.0 || jumpy == collider1 || jumpy == collider2;
-            }
-        }
-    }
 }

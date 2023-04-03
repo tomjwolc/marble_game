@@ -7,38 +7,37 @@ pub struct FixedBundle {
     friction: Friction,
     restitution: Restitution,
     mass: ColliderMassProperties,
-    in_game_entity: InGameEntity,
-    jumpy: Jumpy
+    sensor_channels: SensorChannel,
+    object_events: ObjectEvents,
+    rigid_body: RigidBody,
+    locked_axes: LockedAxes,
+    in_game_entity: InGameEntity
 }
+
+
 
 impl FixedBundle {
-    pub fn with_properties(mut self, mass_properties: ColliderMassProperties, material_properties: MaterialProperties) -> Self {
-        self.friction = material_properties.friction;
-        self.restitution = material_properties.restitution;
-        self.mass = mass_properties;
-
-        self
-    }
-}
-
-impl FromShape for FixedBundle {
-    fn from_collider(collider: Collider) -> Self {
+    pub fn new(
+        mesh_handle: Handle<Mesh>,
+        material_handle: Handle<StandardMaterial>,
+        transform: Transform,
+        collider: Collider,
+        mass: ColliderMassProperties,
+        material_properties: MaterialProperties
+    ) -> Self {
         Self {
+            pbr_bundle: PbrBundle {
+                mesh: mesh_handle,
+                material: material_handle,
+                transform,
+                ..Default::default()
+            },
             collider,
+            mass,
+            friction: material_properties.friction,
+            restitution: material_properties.restitution,
             ..Default::default()
         }
-    }
-
-    fn with_transform(mut self, transform: Transform) -> Self {
-        self.pbr_bundle.transform = transform;
-
-        self
-    }
-
-    fn with_pbr_bundle(mut self, pbr_bundle: PbrBundle) -> Self {
-        self.pbr_bundle = pbr_bundle;
-
-        self
     }
 }
 
@@ -50,8 +49,11 @@ impl Default for FixedBundle {
             friction: MOVABLE_FRICTION,
             restitution: MOVABLE_RESTITUTION,
             mass: ColliderMassProperties::Mass(1.0),
-            in_game_entity: InGameEntity,
-            jumpy: Jumpy
+            sensor_channels: SensorChannel::CanJump,
+            object_events: ObjectEvents::new(),
+            rigid_body: RigidBody::Dynamic,
+            locked_axes: LockedAxes::all(),
+            in_game_entity: InGameEntity
         }
     }
 }

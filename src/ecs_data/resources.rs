@@ -6,7 +6,22 @@ use super::*;
 pub struct DefaultMaterial(pub Handle<StandardMaterial>);
 
 #[derive(Resource)]
+pub struct CanJump(pub bool);
+
+#[derive(Resource)]
 pub struct ActivationTable(pub Vec<bool>);
+
+#[derive(Resource)]
+pub struct LoadedGlbData(pub Vec<LoadedGlbObject>);
+
+#[derive(Clone)]
+pub struct LoadedGlbObject {
+    pub object_type: GltfObjectType,
+    pub collider: Collider,
+    pub transform: Transform,
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>
+}
 
 #[derive(Resource)]
 pub struct LevelStack(Vec<Level>);

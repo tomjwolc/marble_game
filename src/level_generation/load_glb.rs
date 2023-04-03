@@ -2,6 +2,7 @@
 
 use bevy::gltf::{GltfMesh, GltfNode};
 use serde::{Serialize, Deserialize};
+use colored::*;
 
 use super::*;
 
@@ -16,165 +17,205 @@ pub fn load_glb_asset(
     }
 }
 
-pub fn load_glb(
-    mut commands: Commands,
+pub fn try_load_glb_data(
+    mut loaded_glb_data: ResMut<LoadedGlbData>,
     level_stack: Res<LevelStack>,
     gltf_assets: Res<Assets<Gltf>>,
     gltf_node_assets: Res<Assets<GltfNode>>,
     gltf_mesh_assets: Res<Assets<GltfMesh>>,
-    mut mesh_assets: ResMut<Assets<Mesh>>,
+    mesh_assets: Res<Assets<Mesh>>,
     default_material: Res<DefaultMaterial>,
-    mut activation_table: ResMut<ActivationTable>
+    mut menu_scheduler: ResMut<MenuScheduler>,
+    mut next_state: ResMut<NextState<AppState>>
 ) {
     if let Some(gltf) = gltf_assets.get(&level_stack.get_current_level().handle.as_ref().unwrap()) {
-        if DEBUG_GLTF_LOAD { println!("\nScene:") };
+        let num_threads = 10;
 
-        for (name, node_handle) in gltf.named_nodes.iter() {
-            /* Continues if the node asset does not exist, the node has no mesh, 
-            or the mesh asset does not exist */
-            extract!(continue; 
-                Some( node ) = gltf_node_assets.get(node_handle);
-                Some( gltf_mesh_handle ) = &node.mesh;
-                Some( gltf_mesh ) = gltf_mesh_assets.get(gltf_mesh_handle)
-            );
+        if DEBUG_MENUS { println!("Collider loading started"); }
 
-            let extras_data: ExtrasData = serde_json::from_str(
-                if let Some(extras) = &node.extras { extras.value.as_str() } else { "{}" }
-            ).unwrap();
+        if DEBUG_GLTF_LOAD { println!("{}", "\nScene:                                  ".underline().bold()) };
 
-            // Most objects only have 1 primitive
-            let mesh0 = gltf_mesh.primitives[0].mesh.clone();
-            let material0 = if let Some( material ) 
-                = gltf_mesh.primitives[0].material.clone() {
-                material
-            } else {
-                default_material.0.clone()
-            };
+        let nodes: Vec<(&String, &Handle<GltfNode>)> = gltf.named_nodes.iter().collect();
 
-            let object_type = GltfObjectType::from(extras_data);
-            let mut transform = node.transform.with_scale(SCALE * Vec3::ONE);
-            transform.translation *= SCALE;
+        std::thread::scope(|thread_spawner| {
+            let threads = nodes
+                .chunks(num_threads)
+                .map(|node_batch| { thread_spawner.spawn(|| {
+                    let mut loaded_glb_objects = Vec::new();
 
-            if DEBUG_GLTF_LOAD { println!("  {}: {:?}\n    {:?}", name, object_type, transform); }
-
-            match object_type {
-                GltfObjectType::Warp(
-                    warp_to, 
-                    activatable
-                ) => {
-                    commands.spawn(WarpBundle {
-                        pbr_bundle: PbrBundle {
-                            mesh: mesh0.clone(),
-                            material: material0,
-                            transform,
-                            ..Default::default()
-                        },
-                        collider: Collider::from_bevy_mesh(
-                            mesh_assets.get(&mesh0).unwrap(), 
-                            &ComputedColliderShape::TriMesh
-                        ).expect("Could not create warp collider from mesh"),
-                        warp_to: warp_to.clone(),
-                        activatable: activatable.clone(),
-                        ..Default::default()
-                    }).with_children(|parent| {
-                        parent.spawn((SensorBundle::from_collider(
-                            Collider::cylinder(WARP_SENSOR_HEIGHT / 2.0, 1.0)
-                            ).with_transform(Transform::from_xyz(0.0, WARP_SENSOR_HEIGHT / 2.0, 0.0))
-                            .with_sensor_channel(SensorChannel::Warp), 
-                            activatable,
-                            warp_to
-                        ));
-                    });
-                },
-
-                GltfObjectType::Activator(
-                    Activator(id)
-                ) => {
-                    activation_table.0.insert(id, false);
-
-                    commands.spawn(PhysicsButtonBundle::new(
-                        transform, material0, &mut mesh_assets, id
-                    ));
-                    
-                    commands.spawn((SensorBundle::from_collider(
-                        Collider::cylinder(BUTTON_SENSOR_HEIGHT / 2.0, BUTTON_RADIUS)
-                        ).with_transform(transform)
-                        .with_sensor_channel(SensorChannel::Activator), 
-                        Activator(id)
-                    ));
-                },
-
-                GltfObjectType::Sensor{
-                    sensor_channel, 
-                    shape, 
-                    sizes,
-                    gravity_direction_option
-                } => {
-                    let mut entity_commands = commands.spawn(SensorBundle::from_shape(
-                        shape, sizes, &mesh_assets, 
-                        &mesh0
-                    ).with_transform(transform).with_sensor_channel(sensor_channel));
-
-                    if let Some(gravity_direction) = gravity_direction_option {
-                        entity_commands.insert(GravitySensorDirection(SCALE * Vec3::from_array(gravity_direction)));
-                    }
-                },
-
-                GltfObjectType::Movable(
-                    shape, 
-                    sizes, 
-                    mass_properties,
-                    material_properties
-                ) => {
-                    commands.spawn(MovableBundle::from_shape(
-                        shape, sizes, &mesh_assets, 
-                        &mesh0
-                    ).with_pbr_bundle(PbrBundle {
-                        mesh: mesh0,
-                        material: material0,
-                        transform,
-                        ..Default::default()
-                    }).with_properties(mass_properties, material_properties));
-                },
-                
-                GltfObjectType::Fixed(
-                    shape, 
-                    sizes, 
-                    mass_properties,
-                    material_properties
-                ) => {
-                    commands.spawn(FixedBundle::from_shape(
-                        shape, sizes, &mesh_assets, 
-                        &mesh0
-                    ).with_pbr_bundle(PbrBundle {
-                        mesh: mesh0,
-                        material: material0,
-                        transform,
-                        ..Default::default()
-                    }).with_properties(mass_properties, material_properties));
-                },
-
-                _ => {
-                    for primitive in gltf_mesh.primitives.iter() {
-                        let material = if let Some( material ) = primitive.material.clone() {
+                    for (name, node_handle) in node_batch.into_iter() {
+                        /* Continues if the node asset does not exist, the node has no mesh, 
+                        or the mesh asset does not exist */
+                        extract!(continue; 
+                            Some( node ) = gltf_node_assets.get(node_handle);
+                            Some( gltf_mesh_handle ) = &node.mesh;
+                            Some( gltf_mesh ) = gltf_mesh_assets.get(gltf_mesh_handle)
+                        );
+            
+                        let extras_data: ExtrasData = serde_json::from_str(
+                            if let Some(extras) = &node.extras { extras.value.as_str() } else { "{}" }
+                        ).unwrap();
+            
+                        // Most objects only have 1 primitive
+                        let mesh = gltf_mesh.primitives[0].mesh.clone();
+                        let material = if let Some( 
+                            material
+                        ) = gltf_mesh.primitives[0].material.clone() {
                             material
                         } else {
                             default_material.0.clone()
                         };
+
+                        let collider = match (
+                            &extras_data.shape.as_ref().map(|string| string.as_str()), 
+                            &extras_data.collider_dimensions
+                        ) {
+                            (Some("ignore"), _) => Collider::default(),
+                            (Some("cuboid" | "box"), Some(sizes)) => Collider::cuboid(
+                                sizes[0] / 2.0, 
+                                sizes[1] / 2.0, 
+                                sizes[2] / 2.0
+                            ),
+                            (Some("ball" | "sphere"), Some(sizes)) => Collider::ball(
+                                sizes[0] / 2.0
+                            ),
+                            (Some("cylinder"), Some(sizes)) => Collider::cylinder(
+                                sizes[1] / 2.0, 
+                                sizes[0] / 2.0
+                            ),
+                            _ => Collider::from_bevy_mesh(
+                                mesh_assets.get(&mesh).unwrap(), 
+                                &ComputedColliderShape::ConvexDecomposition(VHACDParameters { 
+                                    resolution: 2,
+                                    ..Default::default() 
+                                })
+                            ).unwrap(),
+                        };
+            
+                        let object_type = GltfObjectType::from(extras_data);
+                        let mut transform = node.transform;
+                        transform.scale *= SCALE;
+                        transform.translation *= SCALE;
+            
+                        if DEBUG_GLTF_LOAD { println!("  {}: {:?} w/ {:?}", name.underline(), object_type, transform); }
                         
-                        commands.spawn(FixedBundle::from_mesh(
-                            &mesh_assets, 
-                            &primitive.mesh
-                        ).with_pbr_bundle(PbrBundle {
-                            mesh: primitive.mesh.clone(),
-                            material,
+                        loaded_glb_objects.push(LoadedGlbObject {
+                            object_type,
+                            collider,
                             transform,
-                            ..Default::default()
-                        }));
+                            mesh,
+                            material
+                        });
                     }
+
+                    loaded_glb_objects
+                }) }).collect::<Vec<std::thread::ScopedJoinHandle<Vec<LoadedGlbObject>>>>();
+
+            loaded_glb_data.0 = Vec::new();
+
+            for thread in threads.into_iter() {
+                loaded_glb_data.0.append(&mut thread.join().expect("Could not join thread"));
+            }
+
+            if DEBUG_MENUS { println!("Loading Complete!") }
+
+            menu_scheduler.set_menu_type(MenuType::None);
+            next_state.set(AppState::None);
+        });
+    }
+}
+
+pub fn load_glb(
+    mut commands: Commands,
+    loaded_glb_data: Res<LoadedGlbData>,
+    mut mesh_assets: ResMut<Assets<Mesh>>,
+    mut activation_table: ResMut<ActivationTable>
+) {
+    for LoadedGlbObject { 
+        object_type, collider, 
+        transform, mesh, material
+    } in loaded_glb_data.0.clone().into_iter() {
+        println!("{:?}", transform);
+
+        match object_type {
+            GltfObjectType::Warp(
+                warp_to, 
+                activatable
+            ) => {
+                commands.spawn(WarpBundle {
+                    pbr_bundle: PbrBundle {
+                        mesh: mesh.clone(),
+                        material: material,
+                        transform,
+                        ..Default::default()
+                    },
+                    collider,
+                    warp_to: warp_to.clone(),
+                    activatable: activatable.clone(),
+                    ..Default::default()
+                }).with_children(|parent| {
+                    parent.spawn((SensorBundle::new(
+                        Collider::cylinder(WARP_SENSOR_HEIGHT / 2.0, 1.0),
+                        Transform::default(), SensorChannel::Warp
+                    ), activatable, warp_to));
+                });
+            },
+
+            GltfObjectType::Activator(
+                Activator(id)
+            ) => {
+                activation_table.0.insert(id, false);
+
+                commands.spawn(PhysicsButtonBundle::new(
+                    transform, material, &mut mesh_assets, id
+                ));
+                
+                commands.spawn((SensorBundle::new(
+                    Collider::cylinder(BUTTON_SENSOR_HEIGHT / 2.0, BUTTON_RADIUS),
+                    transform, SensorChannel::Activator
+                ), Activator(id)));
+            },
+
+            GltfObjectType::Sensor(
+                sensor_channel, 
+                gravity_direction_option
+            ) => {
+                let mut entity_commands = commands.spawn(SensorBundle::new(
+                    collider, transform, sensor_channel
+                ));
+
+                if let Some(gravity_direction) = gravity_direction_option {
+                    entity_commands.insert(GravitySensorDirection(SCALE * Vec3::from_array(gravity_direction)));
                 }
-            };
-        }
+            },
+
+            GltfObjectType::Movable(
+                mass_properties,
+                material_properties
+            ) => {
+                commands.spawn(MovableBundle::new(
+                    mesh, material, transform, collider, 
+                    SensorChannel::Respawn.not(),  mass_properties, material_properties
+                ));
+            },
+            
+            GltfObjectType::Fixed(
+                mass_properties,
+                material_properties
+            ) => {
+                commands.spawn(FixedBundle::new(
+                    mesh, material, transform,
+                    collider, mass_properties, material_properties
+                ));
+            },
+
+            _ => {
+                commands.spawn(FixedBundle::new(
+                    mesh, material, transform,
+                    collider, ColliderMassProperties::Mass(1.0), DEFAULT_MATERIAL_PROPERTIES
+                ));
+            }
+        };
     }
 }
 
@@ -183,17 +224,20 @@ struct ExtrasData {
     // warp info
         file_name: Option<String>,
         activation_requirements: Option<Vec<usize>>,
+
     // activator info
         activator_type: Option<String>,
         activator_id: Option<usize>,
-    // sensor/object info
-        // Box vs ball vs ..
+
+    // collider spawner info
         shape: Option<String>,
-        sizes: Option<Vec<f32>>,
+        collider_dimensions: Option<Vec<f32>>,
+
     // sensor info
         sensor_channel: Option<String>,
     // optional sensor info
         gravity_direction: Option<[f32; 3]>,
+
     // object info
         // blender doesn't support bool's as custom properties >:(
         is_dynamic: Option<i8>,
@@ -204,18 +248,13 @@ struct ExtrasData {
         material_type: Option<String>
 }
 
-#[derive(Debug)]
-enum GltfObjectType {
+#[derive(Clone)]
+pub enum GltfObjectType {
     Warp(WarpTo, Activatable),
     Activator(Activator),
-    Sensor{
-        sensor_channel: SensorChannel, 
-        shape: String, 
-        sizes: Vec<f32>,
-        gravity_direction_option: Option<[f32; 3]>
-    },
-    Movable(String, Vec<f32>, ColliderMassProperties, MaterialProperties),
-    Fixed(String, Vec<f32>, ColliderMassProperties, MaterialProperties),
+    Sensor(SensorChannel, Option<[f32; 3]>),
+    Movable(ColliderMassProperties, MaterialProperties),
+    Fixed(ColliderMassProperties, MaterialProperties),
     Object
 }
 
@@ -258,28 +297,22 @@ impl From<ExtrasData> for GltfObjectType {
             // Sensor
             ExtrasData {
                 sensor_channel: Some(sensor_channel),
-                shape: Some(shape),
-                sizes: Some(sizes),
                 gravity_direction: gravity_direction_option,
                 ..
-            } => GltfObjectType::Sensor{
-                sensor_channel: match sensor_channel.to_lowercase().as_str() {
+            } => GltfObjectType::Sensor(
+                match sensor_channel.to_lowercase().as_str() {
                     "warp" => SensorChannel::Warp,
                     "respawn" => SensorChannel::Respawn,
                     "activator" => SensorChannel::Activator,
                     "gravity" => SensorChannel::Gravity,
                     _ => SensorChannel::none()
                 }, 
-                shape, 
-                sizes,
                 gravity_direction_option
-            }, 
+            ), 
 
             // Movable and Fixed
             ExtrasData { 
-                is_dynamic: Some(is_dynamic), 
-                shape: Some(shape),
-                sizes: Some(sizes),
+                is_dynamic: Some(is_dynamic),
                 material_type,
                 mass,
                 density,
@@ -297,14 +330,32 @@ impl From<ExtrasData> for GltfObjectType {
                 };
 
                 if is_dynamic != 0 {
-                    GltfObjectType::Movable(shape, sizes, mass_properties, material_properties)
+                    GltfObjectType::Movable(mass_properties, material_properties)
                 } else {
-                    GltfObjectType::Fixed(shape, sizes, mass_properties, material_properties)
+                    GltfObjectType::Fixed(mass_properties, material_properties)
                 }
             },
 
             // Regular object
             _ => GltfObjectType::Object
         }
+    }
+}
+
+impl std::fmt::Debug for GltfObjectType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            GltfObjectType::Warp(warp_to, activatable) => 
+                pretty_debug!(GltfObjectType::Warp(warp_to, activatable)),
+            GltfObjectType::Activator(activator) => 
+                pretty_debug!(GltfObjectType::Activator(activator)),
+            GltfObjectType::Sensor( sizes, gravity_direction_option ) => 
+                pretty_debug!(GltfObjectType::Sensor( sizes, gravity_direction_option )),
+            GltfObjectType::Movable(mass_properties, material_properties) => 
+                pretty_debug!(GltfObjectType::Movable(mass_properties, material_properties)),
+            GltfObjectType::Fixed(mass_properties, material_properties) => 
+                pretty_debug!(GltfObjectType::Fixed(mass_properties, material_properties)),
+            GltfObjectType::Object => String::from("Object")
+        })
     }
 }

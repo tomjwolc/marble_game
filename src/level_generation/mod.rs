@@ -27,6 +27,7 @@ impl Plugin for LevelGenerationPlugin {
         app 
             .insert_resource(LevelStack::from_level("test_level"))
             .insert_resource(ActivationTable(vec![false; 10]))
+            .insert_resource(LoadedGlbData(Vec::new()))
         ;
     }
 }

@@ -129,3 +129,20 @@ macro_rules! bounded {
         ($a < $b) && ($b < $c)
     };
 }
+
+macro_rules! pretty_debug {
+    ($enum_name:ident :: $variant:ident ( $($field_name:ident),* )) => {
+        {
+            format!("{}(\n    {}\n  )", stringify!( $variant ), vec![
+                $( format!("{}: {:?}", stringify!($field_name).bold(), $field_name), )*
+            ].join(",\n    "))
+        }
+    };
+    ($enum_name:ident :: $variant:ident { $($field_name:ident),* }) => {
+        {
+            format!("{}(\n    {}\n  )", stringify!( $variant ), vec![
+                $( format!("{}: {:?}", stringify!($field_name).bold(), $field_name), )*
+            ].join(",\n    "))
+        }
+    }
+}

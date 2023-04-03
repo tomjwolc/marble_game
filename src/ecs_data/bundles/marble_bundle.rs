@@ -39,8 +39,8 @@ impl MarbleBundle {
             pbr_bundle: PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::UVSphere {
                     radius,
-                    sectors: (10.0 * radius / SCALE).max(40.0) as usize,
-                    stacks: (10.0 * radius / SCALE).max(40.0) as usize,
+                    sectors: NUM_SPHERE_SECTORS,
+                    stacks: NUM_SPHERE_STACKS,
                     ..default()
                 })),
                 material,

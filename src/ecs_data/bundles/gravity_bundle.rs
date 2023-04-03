@@ -35,7 +35,7 @@ impl Default for GravityBundle {
         Self { 
             gravity: Gravity(-GRAVITY * Vec3::Y, GravityType::Planets), 
             grivity_scale: GravityScale(0.0),
-            force: ExternalForce { force: Vec3::ZERO, torque: Vec3::ZERO } ,
+            force: ExternalForce { force: Vec3::ZERO, torque: Vec3::ZERO },
             mass: ColliderMassProperties::Mass(1.0)
         }
     }

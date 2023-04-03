@@ -178,7 +178,7 @@ impl Plugin for MenuPlugin {
 
             .add_system(pause_physics.in_schedule(OnExit(AppState::InGame)))
             .add_system(unpause_physics.in_schedule(OnEnter(AppState::InGame)))
-            .add_system(check_for_load.run_if(can_update_menu(MenuType::Loading)))
+            .add_system(try_load_glb_data.run_if(can_update_menu(MenuType::Loading)))
         ;
     }
 }

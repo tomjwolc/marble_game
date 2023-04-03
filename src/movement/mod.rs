@@ -11,9 +11,6 @@ pub use {
     key_queue::*
 };
 
-#[derive(Resource)]
-pub struct CanJump(bool);
-
 pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
@@ -26,7 +23,6 @@ impl Plugin for MovementPlugin {
             .add_system(update_key_queue.run_if(AppState::in_game))
             .add_systems((
                 move_sensor,
-                update_can_jump,
                 move_player
             ).before(update_key_queue).chain().distributive_run_if(AppState::in_game))
             .add_systems((
