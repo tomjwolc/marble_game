@@ -31,12 +31,12 @@ pub fn engage_activator(
 }
 
 pub fn warp_activation(
-    mut activatable_query: Query<(&Activatable, &mut Transform, &Sensor), With<WarpTo>>
+    mut activatable_query: Query<(&Activatable, &mut SensorChannel, &Sensor), With<WarpTo>>
 ) {
     for (
         &Activatable { is_active, .. }, 
-        mut transform, _
+        mut sensor_channel, _
     ) in activatable_query.iter_mut() {
-        transform.translation.y = if is_active { WARP_SENSOR_HEIGHT / 2.0 } else { 10000.0 };
+        *sensor_channel = if is_active { SensorChannel::Warp } else { SensorChannel::None };
     }
 }

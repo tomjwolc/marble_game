@@ -27,7 +27,8 @@ pub fn check_sensor_events(
             sensor_channel,
             mut sensor_events,
         ) in sensor_entity_query.iter_mut() {
-            let is_intersecting = object_sensor_channels.contains(*sensor_channel) &&
+            let is_intersecting = *sensor_channel != SensorChannel::None &&
+                object_sensor_channels.contains(*sensor_channel) &&
                 rapier_context.intersection_pair(sensor_entity, object_entity) == Some(true);
 
             if is_intersecting {

@@ -104,6 +104,7 @@ impl ObjectEvents {
 #[derive(Component)]
 pub struct SensorEventId(pub usize);
 
+// Num variants in SensorChannel (exclude None)
 pub const NUM_SENSOR_CHANNELS: usize = 5;
 
 #[bitmask(u8)]
@@ -113,8 +114,9 @@ pub enum SensorChannel {
     Warp,
     Activator,
     Gravity,
-    CanJump
-} // when adding to this increment the size of the triggeredChannels array
+    CanJump,
+    None
+}
 
 impl std::fmt::Display for SensorChannel { 
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

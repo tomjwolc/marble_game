@@ -145,7 +145,7 @@ pub fn load_glb(
                 commands.spawn(WarpBundle {
                     pbr_bundle: PbrBundle {
                         mesh: mesh.clone(),
-                        material: material,
+                        material,
                         transform,
                         ..Default::default()
                     },
@@ -153,12 +153,14 @@ pub fn load_glb(
                     warp_to: warp_to.clone(),
                     activatable: activatable.clone(),
                     ..Default::default()
-                }).with_children(|parent| {
-                    parent.spawn((SensorBundle::new(
-                        Collider::cylinder(WARP_SENSOR_HEIGHT / 2.0, 1.0),
-                        Transform::default(), SensorChannel::Warp
-                    ), activatable, warp_to));
                 });
+
+                commands.spawn((SensorBundle::new(
+                    Collider::cylinder(WARP_SENSOR_HEIGHT / 2.0, 1.0),
+                    transform.with_translation(transform.translation + 
+                        transform.rotation.mul_vec3(Vec3::Y * SCALE * WARP_SENSOR_HEIGHT / 2.0)), 
+                    SensorChannel::Warp
+                ), activatable, warp_to));
             },
 
             GltfObjectType::Activator(
