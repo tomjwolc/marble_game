@@ -3,13 +3,13 @@ use super::*;
 pub fn menu_controls(
     state_res: Res<State<AppState>>,
     mut state: ResMut<NextState<AppState>>,
-    mut menu_scheduler: ResMut<MenuScheduler>,
+    mut menu_state: ResMut<NextState<MenuState>>,
     keys: Res<Input<KeyCode>>,
 ) {
-    match (state_res.0, menu_scheduler.get_menu_type()) {
+    match (state_res.0, menu_state.0) {
         (AppState::InGame, _) => {
             if keys.just_pressed(KeyCode::Escape) {
-                menu_scheduler.set_menu_type(MenuType::PauseMenu);
+                menu_state.set(MenuState::PauseMenu);
                 state.set(AppState::OverlayMenu);
             }
         },

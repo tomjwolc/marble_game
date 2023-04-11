@@ -10,6 +10,9 @@ pub struct CanJumpSensor;
 #[derive(Component, Default)]
 pub struct InGameEntity;
 
+#[derive(Component)]
+pub struct MenuEntity;
+
 // Applied to all objects that can be jumped off of
 #[derive(Component, Default)]
 pub struct Jumpy;

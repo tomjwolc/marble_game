@@ -25,7 +25,7 @@ pub fn try_load_glb_data(
     gltf_mesh_assets: Res<Assets<GltfMesh>>,
     mesh_assets: Res<Assets<Mesh>>,
     default_material: Res<DefaultMaterial>,
-    mut menu_scheduler: ResMut<MenuScheduler>,
+    mut menu_state: ResMut<NextState<MenuState>>,
     mut next_state: ResMut<NextState<AppState>>
 ) {
     if let Some(gltf) = gltf_assets.get(&level_stack.get_current_level().handle.as_ref().unwrap()) {
@@ -119,7 +119,7 @@ pub fn try_load_glb_data(
 
             if DEBUG_MENUS { println!("Loading Complete!") }
 
-            menu_scheduler.set_menu_type(MenuType::None);
+            menu_state.set(MenuState::None);
             next_state.set(AppState::None);
         });
     }

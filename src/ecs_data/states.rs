@@ -10,26 +10,12 @@ pub enum AppState {
 }
 
 impl AppState {
-    // pub fn in_main_menu(state: Res<State<AppState>>) -> bool {
-    //     match state.0 {
-    //         Self::MainMenu => true,
-    //         _ => false
-    //     }
-    // }
-
     pub fn in_menu(state: Res<State<AppState>>) -> bool {
         match state.0 {
             Self::MenuScreen | Self::OverlayMenu => true,
             _ => false
         }
     }
-
-    // pub fn in_overlay_menu(state: Res<State<AppState>>) -> bool {
-    //     match state.0 {
-    //         Self::OverlayMenu => true,
-    //         _ => false
-    //     }
-    // }
 
     pub fn in_game(state: Res<State<AppState>>) -> bool {
         match state.0 {
@@ -51,4 +37,18 @@ impl AppState {
             _ => true
         }
     }
+}
+
+// !! If you add to MenuState add the new menu to this macro aswell (except for none) !!
+// The macro is used to unload the menus
+#[derive(Default, Debug, Hash, PartialEq, Eq, Clone, Copy, States)]
+pub enum MenuState {
+    #[default]
+    MainMenu,
+    Loading,
+    PauseMenu,
+    DeathScreen,
+    WinScreen,
+    Credits,
+    None
 }

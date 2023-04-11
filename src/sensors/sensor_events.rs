@@ -75,12 +75,12 @@ pub fn check_sensor_events(
 
 pub fn respawn_events(
     player_events_query: Query<&ObjectEvents, With<Player>>,
-    mut menu_scheduler: ResMut<MenuScheduler>,
+    mut menu_state: ResMut<NextState<MenuState>>,
     mut state: ResMut<NextState<AppState>>
 ) {
     if let Ok(object_events) = player_events_query.get_single() {
         if object_events.get(SensorChannel::Respawn).len() > 0 {
-            menu_scheduler.set_menu_type(MenuType::DeathScreen);
+            menu_state.set(MenuState::DeathScreen);
             state.set(AppState::OverlayMenu);
         }
     }
@@ -90,7 +90,7 @@ pub fn warp_events(
     player_events_query: Query<&ObjectEvents, With<Player>>,
     warp_sensors: Query<(&WarpTo, &SensorEvents), With<Sensor>>,
     mut level_stack: ResMut<LevelStack>,
-    mut menu_scheduler: ResMut<MenuScheduler>,
+    mut menu_state: ResMut<NextState<MenuState>>,
     mut state: ResMut<NextState<AppState>>,
 ) {
     let Ok(object_events) = player_events_query.get_single() else { return };
@@ -99,7 +99,7 @@ pub fn warp_events(
         if !object_events.get(SensorChannel::Warp).is_disjoint(sensor_events) {
             level_stack.warp(warp_to);
 
-            menu_scheduler.set_menu_type(MenuType::WinScreen);
+            menu_state.set(MenuState::WinScreen);
             state.set(AppState::OverlayMenu);
         }   
     }

@@ -14,6 +14,7 @@ fn main() {
 
     App::new()
         .add_state::<AppState>()
+        .add_state::<MenuState>()
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .insert_resource(DefaultMaterial(Handle::default()))
         .add_plugins(DefaultPlugins.set(window_plugin).set(ImagePlugin::default_nearest()))
@@ -48,7 +49,7 @@ fn basic_setup(
     });
 }
 
-mod level_generation;
+mod load_unload;
 mod menus;
 mod movement;
 mod win_lose_reward;
@@ -59,7 +60,7 @@ mod sensors;
 
 mod prelude {
     pub use {crate::{
-        level_generation::*, menus::*,
+        load_unload::*, menus::*,
         movement::*, win_lose_reward::*,
         materials::*, ecs_data::*, gravity::*,
         sensors::*

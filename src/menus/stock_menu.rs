@@ -1,38 +1,30 @@
-use std::marker::PhantomData;
-
 pub use super::*;
 
 #[derive(Component)]
-pub struct ButtonComponent<T> {
-    id: usize,
-    __phantom_data: PhantomData<T>
-}
+pub struct ButtonComponent(usize);
 
 #[derive(Debug)]
-pub struct StockMenu<T: Component + Clone>{
+pub struct StockMenu {
     title: &'static str,
     buttons: Vec<Button>,
-    bg_transparency: f32,
-    component: T
+    bg_transparency: f32
 }
 
-impl<T: Component + Clone> StockMenu<T> {
-    pub fn new(title: &'static str, buttons: Vec<Button>, component: T) -> Self {
-        Self { title, buttons, bg_transparency: 1.0, component }
+impl StockMenu {
+    pub fn new(title: &'static str, buttons: Vec<Button>) -> Self {
+        Self { title, buttons, bg_transparency: 1.0 }
     }
 
-    pub fn new_overlay(title: &'static str, buttons: Vec<Button>, component: T) -> Self {
+    pub fn new_overlay(title: &'static str, buttons: Vec<Button>) -> Self {
         Self { 
             title, buttons, 
-            bg_transparency: OVERLAY_TRANSPARANCY, 
-            component 
+            bg_transparency: OVERLAY_TRANSPARANCY
         }
     }
 
     pub fn add_to_app(
         self, 
-        menu_scheduler: &mut MenuScheduler, 
-        menu_type: MenuType,
+        menu_state: MenuState,
         app: &mut App
     ) {
         let button_labels: Vec<&str> = self.buttons
@@ -41,9 +33,7 @@ impl<T: Component + Clone> StockMenu<T> {
             .map(|button| button.label)
             .collect();
 
-        add_menu_enter_systems!(
-            menu_scheduler:
-            menu_type => move |mut commands: Commands, asset_server: Res<AssetServer>| {
+        app.add_system((move |mut commands: Commands, asset_server: Res<AssetServer>| {
                 let hover_event = HoverEvent { 
                     color: BUTTON_COLOR, 
                     hover_color: BUTTON_HOVER_COLOR 
@@ -76,7 +66,7 @@ impl<T: Component + Clone> StockMenu<T> {
                         },
                         background_color: BACKGROUND_COLOR.with_a(self.bg_transparency).into(),
                         ..default()
-                    }, self.component.clone()))
+                    }, MenuEntity))
                     .with_children(|parent| {
                         // Spawns Title banner
                         parent
@@ -107,10 +97,7 @@ impl<T: Component + Clone> StockMenu<T> {
 
                         for (i, label) in button_labels.iter().enumerate() {
                             parent
-                            .spawn((default_button.clone(), hover_event, ButtonComponent::<T> {
-                                id: i,
-                                __phantom_data: PhantomData::default()
-                            }))
+                            .spawn((default_button.clone(), hover_event, ButtonComponent(i)))
                             .with_children(|parent| {
                                 parent.spawn(TextBundle::from_section(
                                     *label,
@@ -124,16 +111,7 @@ impl<T: Component + Clone> StockMenu<T> {
                         }
                     });
             }
-        );
-
-        add_menu_exit_systems!(
-            menu_scheduler:
-            menu_type => move |entities_query: Query<Entity, With<T>>, mut commands: Commands| {
-                for entity in entities_query.iter() {
-                    commands.entity(entity).despawn_recursive();
-                }
-            }
-        );
+        ).in_schedule(OnEnter(menu_state)));
 
         for (i, Button { 
             mut on_click, 
@@ -150,21 +128,19 @@ impl<T: Component + Clone> StockMenu<T> {
                 })
 
                 // Checks that we are in the right menu
-                .run_if(can_update_menu(menu_type)
+                .in_set(OnUpdate(menu_state))
                 
                 // Checks for any of the key presses
-                .and_then((move |keys: Res<Input<KeyCode>>| { 
+                .run_if((move |keys: Res<Input<KeyCode>>| { 
                     key_binds.iter().any(|key| keys.just_pressed(*key)) 
                 })
                 
                 // Checks for button clicks
-                .or_else(move |interaction_query: Query<(&Interaction, &ButtonComponent<T>)>,| { 
-                    // println!("{:?}", interaction_query);
-                    interaction_query.iter().any(|(interaction, ButtonComponent { id, .. })| {
-                        // println!("{:?} && {:?} == {:?}", interaction, i, id);
+                .or_else(move |interaction_query: Query<(&Interaction, &ButtonComponent)>,| { 
+                    interaction_query.iter().any(|(interaction, ButtonComponent(id))| {
                         *interaction == Interaction::Clicked && i == *id
                     })
-                })))
+                }))
             );
         }
     }

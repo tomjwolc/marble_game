@@ -20,20 +20,16 @@ macro_rules! add_despawning_system {
     };
 }
 
-macro_rules! add_menu_enter_systems {
-    ($menu_scheduler:ident: $($menu_type:expr => $system:expr),*) => {
-        $(
-            $menu_scheduler  .get_enter_schedule_mut( $menu_type ).add_system( $system );
-        )*
-    };
-}
-
-macro_rules! add_menu_exit_systems {
-    ($menu_scheduler:ident: $($menu_type:expr => $system:expr),*) => {
-        $(
-            $menu_scheduler  .get_exit_schedule_mut( $menu_type ).add_system( $system );
-        )*
-    };
+macro_rules! add_to_all_exit_systems {
+    ($app:ident, $func:expr) => {
+        $app
+            .add_system($func  .in_schedule(OnExit(MenuState::MainMenu)))
+            .add_system($func  .in_schedule(OnExit(MenuState::Loading)))
+            .add_system($func  .in_schedule(OnExit(MenuState::PauseMenu)))
+            .add_system($func  .in_schedule(OnExit(MenuState::DeathScreen)))
+            .add_system($func  .in_schedule(OnExit(MenuState::WinScreen)))
+            .add_system($func  .in_schedule(OnExit(MenuState::Credits)))
+    }
 }
 
 #[allow(unused_macros)]

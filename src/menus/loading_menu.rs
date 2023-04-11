@@ -15,7 +15,7 @@ pub fn setup_loading_screen(
             },
             background_color: BACKGROUND_COLOR.into(),
             ..default()
-        }, LoadingScreenItem)).with_children(|parent| {
+        }, MenuEntity)).with_children(|parent| {
             parent.spawn(TextBundle::from_section(
                 "Loading...",
                 TextStyle {
@@ -25,13 +25,4 @@ pub fn setup_loading_screen(
                 },
             ));
         });
-}
-
-pub fn remove_loading_screen(
-    mut commands: Commands,
-    entities_query: Query<Entity, With<LoadingScreenItem>>
-) {
-    for entity in entities_query.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
 }
