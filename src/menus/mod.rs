@@ -27,12 +27,14 @@ impl Plugin for MenuPlugin {
                     vec![KeyCode::Return],
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
+                        mut state: ResMut<NextState<AppState>>,
+                        mut load_type: ResMut<LoadType>
                     | {
                         //     Switch to the loading screen, which will then redirect to InGame if
                         // the level has been loaded
                         menu_state.set(MenuState::Loading);
                         state.set(AppState::MenuScreen);
+                        *load_type = LoadType::Fresh;
                     })
                 ), Button::new(
                     "Quit",
@@ -53,10 +55,14 @@ impl Plugin for MenuPlugin {
                     vec![KeyCode::R],
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
+                        mut state: ResMut<NextState<AppState>>,
+                        mut unload_type: ResMut<UnloadType>,
+                        mut load_type: ResMut<LoadType>
                     | {
                         menu_state.set(MenuState::None);
                         state.set(AppState::None);
+                        *unload_type = UnloadType::Hard;
+                        *load_type = LoadType::Fresh;
                     })
                 ), Button::new(
                     "Resume",
@@ -73,19 +79,12 @@ impl Plugin for MenuPlugin {
                     vec![KeyCode::Q],
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
+                        mut state: ResMut<NextState<AppState>>,
+                        mut unload_type: ResMut<UnloadType>
                     | {
                         menu_state.set(MenuState::MainMenu);
                         state.set(AppState::MenuScreen);
-                    })
-                ), Button::new_key_press_only(
-                    vec![KeyCode::W],
-                    pass_schedule!(move |
-                        mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
-                    | {
-                        menu_state.set(MenuState::WinScreen);
-                        state.set(AppState::OverlayMenu);
+                        *unload_type = UnloadType::Complete;
                     })
                 ),
             ]
@@ -100,20 +99,26 @@ impl Plugin for MenuPlugin {
                     vec![KeyCode::R, KeyCode::Return],
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
+                        mut state: ResMut<NextState<AppState>>,
+                        mut unload_type: ResMut<UnloadType>,
+                        mut load_type: ResMut<LoadType>
                     | {
                         menu_state.set(MenuState::None);
                         state.set(AppState::None);
+                        *unload_type = UnloadType::Hard;
+                        *load_type = LoadType::Fresh;
                     })
                 ), Button::new(
                     "Quit",
                     vec![KeyCode::Q, KeyCode::Escape],
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
+                        mut state: ResMut<NextState<AppState>>,
+                        mut unload_type: ResMut<UnloadType>
                     | {
                         menu_state.set(MenuState::MainMenu);
                         state.set(AppState::MenuScreen);
+                        *unload_type = UnloadType::Complete;
                     })
                 ),
             ]
@@ -127,6 +132,8 @@ impl Plugin for MenuPlugin {
                 Button::new(
                     "Continue",
                     vec![KeyCode::R, KeyCode::Return],
+                    /* unload type and load type were already set in the warp_sensor event so no 
+                     need to do it again here. */
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
                         mut state: ResMut<NextState<AppState>>
@@ -139,10 +146,12 @@ impl Plugin for MenuPlugin {
                     vec![KeyCode::Q, KeyCode::Escape],
                     pass_schedule!(move |
                         mut menu_state: ResMut<NextState<MenuState>>,
-                        mut state: ResMut<NextState<AppState>>
+                        mut state: ResMut<NextState<AppState>>,
+                        mut unload_type: ResMut<UnloadType>
                     | {
                         menu_state.set(MenuState::MainMenu);
                         state.set(AppState::MenuScreen);
+                        *unload_type = UnloadType::Complete;
                     })
                 ),
             ]
@@ -155,17 +164,13 @@ impl Plugin for MenuPlugin {
                 button_hover_event.run_if(AppState::in_menu)
             )
 
-            .add_systems((
-                load_glb_asset,
-                setup_loading_screen
-            ).in_schedule(OnEnter(MenuState::Loading)))
+            .add_system(setup_loading_screen.in_schedule(OnEnter(MenuState::Loading)))
 
             .add_system(menu_controls)
             .add_system(go_back_to_game.in_schedule(OnEnter(AppState::None)))
 
             .add_system(pause_physics.in_schedule(OnExit(AppState::InGame)))
             .add_system(unpause_physics.in_schedule(OnEnter(AppState::InGame)))
-            .add_system(try_load_glb_data.in_set(OnUpdate(MenuState::Loading)))
         ;
     }
 }

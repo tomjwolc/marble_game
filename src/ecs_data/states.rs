@@ -39,6 +39,12 @@ impl AppState {
     }
 }
 
+#[derive(SystemSet, Hash, Debug, Eq, PartialEq, Clone)]
+pub enum SceneManagingSet {
+    Spawn,
+    Despawn
+}
+
 // !! If you add to MenuState add the new menu to this macro aswell (except for none) !!
 // The macro is used to unload the menus
 #[derive(Default, Debug, Hash, PartialEq, Eq, Clone, Copy, States)]

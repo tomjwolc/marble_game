@@ -5,7 +5,7 @@ use super::*;
 // Sets camera_dir component
 pub fn rotate_camera(
     mut camera_dir_query: Query<&mut CameraDir, With<Camera>>,
-    player_transform_query: Query<&Gravity, (With<Player>, Without<Camera>)>,
+    player_transform_query: Query<&Gravity, (With<Player>, With<InGameEntity>, Without<Camera>)>,
     mut mouse_motion: EventReader<MouseMotion>
 ) {
     panic_extract!(rotate_camera:
@@ -45,7 +45,7 @@ pub fn rotate_camera(
 // Uses camera_dir to place the camera
 pub fn update_camera(
     mut camera_query: Query<(&mut Transform, &CameraDir), With<Camera>>,
-    player_transform_query: Query<(Entity, &Transform, &Gravity), (With<Player>, Without<Camera>)>,
+    player_transform_query: Query<(Entity, &Transform, &Gravity), (With<Player>, With<InGameEntity>, Without<Camera>)>,
     rapier_context: Res<RapierContext>
 ) {
     panic_extract!(update_camera:

@@ -2,7 +2,7 @@ use super::*;
 
 pub fn move_player(
     keys: Res<Input<KeyCode>>,
-    mut player_query: Query<(&mut ExternalImpulse, &mut ExternalForce, &Velocity, &Gravity), With<Player>>,
+    mut player_query: Query<(&mut ExternalImpulse, &mut ExternalForce, &Velocity, &Gravity), (With<Player>, With<InGameEntity>)>,
     camera_transform_query: Query<&Transform, With<Camera>>,
     can_jump: Res<CanJump>,
     mut key_queue: ResMut<KeyQueue>
@@ -57,8 +57,8 @@ pub fn move_player(
 }
 
 pub fn move_sensor(
-    player_transform_query: Query<(&Transform, &Gravity), With<Player>>,
-    mut sensor_transform_query: Query<&mut Transform, (With<CanJumpSensor>, Without<Player>)>
+    player_transform_query: Query<(&Transform, &Gravity), (With<Player>, With<InGameEntity>)>,
+    mut sensor_transform_query: Query<&mut Transform, (With<CanJumpSensor>, With<InGameEntity>, Without<Player>)>
 ) {
     log_extract!(move_sensor:
         Ok((player_transform, &Gravity(gravity, _))) = player_transform_query.get_single();

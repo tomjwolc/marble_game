@@ -7,16 +7,26 @@ macro_rules! color {
 macro_rules! add_spawning_system {
     ($app:ident, $func:ident) => {
         $app
-        .add_system($func  .run_if(AppState::spawn_into).in_schedule(OnExit(AppState::MenuScreen)))
-        .add_system($func  .run_if(AppState::spawn_into).in_schedule(OnExit(AppState::None)))
+            .add_system($func  .run_if(AppState::spawn_into).in_schedule(OnExit(AppState::MenuScreen)))
+            .add_system($func  .run_if(AppState::spawn_into).in_schedule(OnExit(AppState::None)))
+    };
+    ($app:ident, $func:ident if $runif:expr) => {
+        $app
+            .add_system($func  .run_if(AppState::spawn_into.and_then($runif)).in_schedule(OnExit(AppState::MenuScreen)))
+            .add_system($func  .run_if(AppState::spawn_into.and_then($runif)).in_schedule(OnExit(AppState::None)))
     };
 }
 
 macro_rules! add_despawning_system {
     ($app:ident, $func:ident) => {
         $app
-        .add_system($func  .run_if(AppState::despawn_into).in_schedule(OnExit(AppState::InGame)))
-        .add_system($func  .run_if(AppState::despawn_into).in_schedule(OnExit(AppState::OverlayMenu)))
+            .add_system($func  .run_if(AppState::despawn_into).in_schedule(OnExit(AppState::InGame)))
+            .add_system($func  .run_if(AppState::despawn_into).in_schedule(OnExit(AppState::OverlayMenu)))
+    };
+    ($app:ident, $func:ident if $runif:expr) => {
+        $app
+            .add_system($func  .run_if(AppState::despawn_into.and_then($runif)).in_schedule(OnExit(AppState::InGame)))
+            .add_system($func  .run_if(AppState::despawn_into.and_then($runif)).in_schedule(OnExit(AppState::OverlayMenu)))
     };
 }
 

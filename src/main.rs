@@ -17,6 +17,8 @@ fn main() {
         .add_state::<MenuState>()
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .insert_resource(DefaultMaterial(Handle::default()))
+        .insert_resource(PrevAppState(AppState::None))
+
         .add_plugins(DefaultPlugins.set(window_plugin).set(ImagePlugin::default_nearest()))
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default().always_on_top())
@@ -25,6 +27,7 @@ fn main() {
         .add_plugin(MovementPlugin)
         .add_plugin(GravityPlugin)
         .add_plugin(SensorPlugin)
+        .add_plugin(TimerPlugin)
         .add_startup_system(basic_setup)
         .run();
 }
@@ -57,13 +60,14 @@ mod materials;
 mod ecs_data;
 mod gravity;
 mod sensors;
+mod timer_plugin;
 
 mod prelude {
     pub use {crate::{
         load_unload::*, menus::*,
         movement::*, win_lose_reward::*,
         materials::*, ecs_data::*, gravity::*,
-        sensors::*
+        sensors::*, timer_plugin::*
     }, 
         bevy::prelude::*,
         bevy_rapier3d::prelude::*,

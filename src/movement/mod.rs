@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 pub use super::*;
 use std::collections::HashMap;
 
@@ -29,7 +31,31 @@ impl Plugin for MovementPlugin {
                 rotate_camera.before(update_camera),
                 update_camera,
             ).distributive_run_if(AppState::in_game))
-
+            // .add_system(log_moves.run_if(AppState::in_game))
         ;
+    }
+}
+
+pub fn log_moves(
+    player_transform_query: Query<
+        (&Transform, Option<&SoftUnloadedData>, Option<&InGameEntity>, Option<&Player>), 
+        (Or<(&SoftUnloadedData, &InGameEntity)>, Changed<Transform>)
+    >
+) {
+    for (
+        transform, 
+        data_option, 
+        is_in_game, 
+        is_player
+    ) in player_transform_query.iter() {
+        let mut str = if let Some(data) = data_option {
+            format!(     "unloaded_entity[{}]", data.id).green().italic()
+        } else {
+            String::from("     loaded_entity").green()
+        };
+
+        str = if is_player.is_some() { str.red() } else { str };
+
+        println!("{} {} --- {}", if is_in_game.is_some() { "██" } else { "  " }, str, transform.translation);
     }
 }

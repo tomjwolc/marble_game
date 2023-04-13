@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::*;
 use bitmask_enum::*;
 
@@ -133,3 +135,14 @@ impl std::fmt::Display for SensorChannel {
         })
     }
 }
+
+#[derive(Component)]
+pub struct SoftUnloadedData {
+    pub id: usize,
+    pub collider_option: Option<Collider>,
+    pub rigid_body_option: Option<RigidBody>,
+    pub give_lifetime: Option<Duration>
+}
+
+#[derive(Component)]
+pub struct AddTimerForReload;

@@ -3,9 +3,10 @@ use bevy_rapier3d::prelude::{Friction, CoefficientCombineRule, Restitution};
 pub use std::f32::consts::PI;
 use phf::phf_map;
 
-pub const DEBUG_MENUS: bool = true;
+pub const DEBUG_MENUS: bool = false;
 pub const DEBUG_GLTF_LOAD: bool = true;
 pub const DEBUG_SENSORS: bool = true;
+pub const DEBUG_LOAD: bool = true;
 
 // Scale for physics
 pub const SCALE: f32 = 100.0;

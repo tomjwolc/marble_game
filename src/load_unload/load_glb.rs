@@ -10,6 +10,8 @@ pub fn load_glb_asset(
     asset_server: Res<AssetServer>,
     mut level_stack: ResMut<LevelStack>
 ) {
+    if DEBUG_MENUS || DEBUG_LOAD { println!("Loading a new level fresh") };
+
     if level_stack.get_current_level().handle.is_none() {
         level_stack.get_current_level_mut().handle = Some(asset_server.load(
             format!("levels/{}.glb", level_stack.get_current_level().file_name).as_str()
@@ -135,8 +137,6 @@ pub fn load_glb(
         object_type, collider, 
         transform, mesh, material
     } in loaded_glb_data.0.clone().into_iter() {
-        println!("{:?}", transform);
-
         match object_type {
             GltfObjectType::Warp(
                 warp_to, 

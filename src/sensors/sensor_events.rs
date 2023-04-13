@@ -4,12 +4,12 @@ use colored::*;
 
 pub fn check_sensor_events(
     rapier_context: Res<RapierContext>,
-    mut sensor_entity_query: Query<(Entity, &SensorChannel, &mut SensorEvents), With<Sensor>>,
-    mut object_entity_query: Query<(Entity, &SensorChannel, &mut ObjectEvents), Without<Sensor>>,
+    mut sensor_entity_query: Query<(Entity, &SensorChannel, &mut SensorEvents), (With<Sensor>, With<InGameEntity>)>,
+    mut object_entity_query: Query<(Entity, &SensorChannel, &mut ObjectEvents), (With<InGameEntity>, Without<Sensor>)>,
 ) {
     for (
         _, _,
-        mut sensor_events,
+        mut sensor_events
     ) in sensor_entity_query.iter_mut() {
         // sets sensor_events to SensorEvents(HashSet::new(), sensor_events.0)
         sensor_events.1 = std::mem::replace(&mut sensor_events.0, HashSet::new());
@@ -25,7 +25,7 @@ pub fn check_sensor_events(
         for (
             sensor_entity, 
             sensor_channel,
-            mut sensor_events,
+            mut sensor_events
         ) in sensor_entity_query.iter_mut() {
             let is_intersecting = *sensor_channel != SensorChannel::None &&
                 object_sensor_channels.contains(*sensor_channel) &&
@@ -56,7 +56,7 @@ pub fn check_sensor_events(
         for (
             sensor_entity,
             sensor_channel,
-            sensor_events,
+            sensor_events
         ) in sensor_entity_query.iter() {
             if sensor_events.0.len() != sensor_events.1.len() {
                 println!(
@@ -74,7 +74,7 @@ pub fn check_sensor_events(
 }
 
 pub fn respawn_events(
-    player_events_query: Query<&ObjectEvents, With<Player>>,
+    player_events_query: Query<&ObjectEvents, (With<Player>, With<InGameEntity>)>,
     mut menu_state: ResMut<NextState<MenuState>>,
     mut state: ResMut<NextState<AppState>>
 ) {
@@ -87,16 +87,28 @@ pub fn respawn_events(
 }
 
 pub fn warp_events(
-    player_events_query: Query<&ObjectEvents, With<Player>>,
-    warp_sensors: Query<(&WarpTo, &SensorEvents), With<Sensor>>,
+    player_events_query: Query<&ObjectEvents, (With<Player>, With<InGameEntity>)>,
+    warp_sensors: Query<(Entity, &WarpTo, &SensorEvents), (With<Sensor>, With<InGameEntity>, Without<Timed>)>,
     mut level_stack: ResMut<LevelStack>,
+    mut unload_type: ResMut<UnloadType>,
+    mut load_type: ResMut<LoadType>,
     mut menu_state: ResMut<NextState<MenuState>>,
     mut state: ResMut<NextState<AppState>>,
+    soft_unloaded_query: Query<With<SoftUnloadedData>>,
+    mut commands: Commands
 ) {
     let Ok(object_events) = player_events_query.get_single() else { return };
 
-    for (warp_to, SensorEvents(sensor_events, _)) in warp_sensors.iter() {
+    for (entity, warp_to, SensorEvents(sensor_events, _)) in warp_sensors.iter() {
         if !object_events.get(SensorChannel::Warp).is_disjoint(sensor_events) {
+            (*unload_type, *load_type) = if let WarpTo::File(_) = warp_to { 
+                (UnloadType::Soft, LoadType::Fresh) // Soft unloads current level and loads the next fresh
+            } else { // Hard unloads the current level and reloads the last if it exists
+                (UnloadType::Hard, if soft_unloaded_query.is_empty() { LoadType::Fresh } else { LoadType::Reload })
+            };
+
+            commands.entity(entity).insert(AddTimerForReload);
+
             level_stack.warp(warp_to);
 
             menu_state.set(MenuState::WinScreen);
@@ -106,7 +118,7 @@ pub fn warp_events(
 }
 
 pub fn activator_events(
-    activator_query: Query<(&Activator, &SensorEvents)>,
+    activator_query: Query<(&Activator, &SensorEvents), With<InGameEntity>>,
     mut activation_table: ResMut<ActivationTable>
 ) {
     activation_table.0.iter_mut().for_each(|b| *b = false);
@@ -117,8 +129,8 @@ pub fn activator_events(
 }
 
 pub fn gravity_sensor_events(
-    gravity_sensor_events_query: Query<(&GravitySensorDirection, &SensorEvents)>,
-    mut object_events_query: Query<(&mut Gravity, &ObjectEvents), Without<Sensor>>
+    gravity_sensor_events_query: Query<(&GravitySensorDirection, &SensorEvents), With<InGameEntity>>,
+    mut object_events_query: Query<(&mut Gravity, &ObjectEvents), (With<InGameEntity>, Without<Sensor>)>
 ) {
     for (mut gravity, object_events) in object_events_query.iter_mut() {
         let object_event_id_set = object_events.get(SensorChannel::Gravity);
@@ -137,7 +149,7 @@ pub fn gravity_sensor_events(
 }
 
 pub fn can_jump_sensor_events(
-    can_jump_sensor_query: Query<&SensorEvents, With<CanJumpSensor>>,
+    can_jump_sensor_query: Query<&SensorEvents, (With<CanJumpSensor>, With<InGameEntity>)>,
     mut can_jump: ResMut<CanJump>
 ) {
     let Ok(sensor_events) = can_jump_sensor_query.get_single() else { return };

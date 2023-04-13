@@ -1,8 +1,8 @@
 pub use super::*;
 
 pub fn reorient_gravity(
-    mut gravity_query: Query<(&Transform, &ColliderMassProperties, &mut Gravity)>,
-    gravity_well_query: Query<(&Transform, &ColliderMassProperties), Without<NotGravityWell>>
+    mut gravity_query: Query<(&Transform, &ColliderMassProperties, &mut Gravity), With<InGameEntity>>,
+    gravity_well_query: Query<(&Transform, &ColliderMassProperties), (With<InGameEntity>, Without<NotGravityWell>)>
 ) {
     for (
         entity_transform, 
@@ -40,7 +40,7 @@ pub fn reorient_gravity(
 }
 
 pub fn apply_gravitational_force(
-    mut gravity_query: Query<(&Gravity, &RigidBody, &mut ExternalForce)>
+    mut gravity_query: Query<(&Gravity, &RigidBody, &mut ExternalForce), With<InGameEntity>>
 ) {
     for (Gravity(gravity, _), rigid_body, mut external_force) in gravity_query.iter_mut() {
         if let RigidBody::Dynamic = rigid_body {
