@@ -1,4 +1,5 @@
-use bevy::gltf::Gltf;
+use bevy::{gltf::Gltf, asset::HandleId};
+use colored::Colorize;
 
 use super::*;
 
@@ -7,12 +8,6 @@ pub struct DefaultMaterial(pub Handle<StandardMaterial>);
 
 #[derive(Resource)]
 pub struct CanJump(pub bool);
-
-#[derive(Resource)]
-pub struct ActivationTable(pub Vec<bool>);
-
-#[derive(Resource)]
-pub struct PrevAppState(pub AppState);
 
 /* This should be set whenever the in game elements are about to be
  unloaded */
@@ -29,10 +24,10 @@ pub enum LoadType {
     Fresh
 }
 
-#[derive(Resource)]
+#[derive(Resource, Debug, Clone)]
 pub struct LoadedGlbData(pub Vec<LoadedGlbObject>);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LoadedGlbObject {
     pub object_type: GltfObjectType,
     pub collider: Collider,
@@ -44,9 +39,11 @@ pub struct LoadedGlbObject {
 #[derive(Resource)]
 pub struct LevelStack(Vec<Level>);
 
+#[derive(Debug)]
 pub struct Level {
     pub handle: Option<Handle<Gltf>>,
-    pub file_name: String
+    pub file_name: String,
+    pub loaded_glb_data: Option<LoadedGlbData>
 }
 
 // It is assumed that LevelStack will always have at least one element in it
@@ -70,14 +67,15 @@ impl LevelStack {
     }
 
     pub fn from_level(file_name: &'static str) -> Self {
-        Self(vec![Level { handle: None, file_name: file_name.to_owned() }])
+        Self(vec![Level { handle: None, file_name: file_name.to_owned(), loaded_glb_data: None }])
     }
 
     pub fn warp(&mut self, warp_to: &WarpTo) {
         match warp_to {
             WarpTo::File(file_name) => self.push(Level { 
                 handle: None, 
-                file_name: file_name.clone()
+                file_name: file_name.clone(),
+                loaded_glb_data: None 
             }), 
             WarpTo::Out => {
                 self.pop();
@@ -95,5 +93,32 @@ impl LevelStack {
 
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+}
+
+impl std::fmt::Debug for LevelStack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut str = format!("{} [\n", "LevelStack".bold());
+
+        for level in self.0.iter() {
+            str = format!("{}    {} {{ {:?} - \"{}\" @ {} }}\n", 
+                str,
+                "Level".bold(),
+                level.loaded_glb_data.as_ref().map(|data| data.0.len()),
+                level.file_name, 
+                if let Some(handle) = &level.handle {
+                    match handle.id() {
+                        HandleId::Id(_, id) => format!("Id-{}", id),
+                        HandleId::AssetPathId(asset_path_id) => format!("Path-{}", 
+                            format!("{:?}", asset_path_id.label_id())[8..].to_owned()
+                        )
+                    }
+                } else {
+                    String::from("Not yet loaded")
+                }
+            );
+        }
+
+        write!(f, "{}]", str)
     }
 }

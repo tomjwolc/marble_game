@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use super::*;
 
 pub fn despawn_all_game_entities(
@@ -32,8 +30,8 @@ pub fn soft_despawn_game_entities(
         Option<&mut Visibility>, 
         Option<&Collider>, 
         Option<&RigidBody>,
-        Option<&AddTimerForReload>
-    ), With<InGameEntity>>,
+        Option<&AddTimerForReload> 
+    ), With<InGameEntity>>, 
     level_stack: Res<LevelStack>,
     mut commands: Commands
 ) {
@@ -54,7 +52,7 @@ pub fn soft_despawn_game_entities(
             collider_option: collider_option.map(|collider| collider.clone()),
             rigid_body_option: rigid_body_option.map(|rigid_body| rigid_body.clone()),
             give_lifetime: if let Some(_) = add_timer_option { 
-                Some(Duration::from_secs(6)) 
+                Some(RELOAD_WARP_DISABLE_DURATION) 
             } else { 
                 None
             }

@@ -95,7 +95,8 @@ pub fn warp_events(
     mut menu_state: ResMut<NextState<MenuState>>,
     mut state: ResMut<NextState<AppState>>,
     soft_unloaded_query: Query<With<SoftUnloadedData>>,
-    mut commands: Commands
+    mut commands: Commands,
+    mut pkv_store: ResMut<PkvStore>
 ) {
     let Ok(object_events) = player_events_query.get_single() else { return };
 
@@ -103,7 +104,17 @@ pub fn warp_events(
         if !object_events.get(SensorChannel::Warp).is_disjoint(sensor_events) {
             (*unload_type, *load_type) = if let WarpTo::File(_) = warp_to { 
                 (UnloadType::Soft, LoadType::Fresh) // Soft unloads current level and loads the next fresh
-            } else { // Hard unloads the current level and reloads the last if it exists
+            } else {
+                // Marks the current level as completed
+                let mut completed_levels = pkv_store
+                    .get::<CompletedLevels>(COMPLETED_LEVELS)
+                    .unwrap_or(CompletedLevels(HashSet::new()));
+
+                completed_levels.0.insert(level_stack.get_current_level().file_name.clone());
+
+                let _ = pkv_store.set::<CompletedLevels>(COMPLETED_LEVELS, &completed_levels);
+
+                // Hard unloads the current level and reloads the last if it exists
                 (UnloadType::Hard, if soft_unloaded_query.is_empty() { LoadType::Fresh } else { LoadType::Reload })
             };
 
@@ -113,18 +124,20 @@ pub fn warp_events(
 
             menu_state.set(MenuState::WinScreen);
             state.set(AppState::OverlayMenu);
+
+            return;
         }   
     }
 }
 
 pub fn activator_events(
-    activator_query: Query<(&Activator, &SensorEvents), With<InGameEntity>>,
-    mut activation_table: ResMut<ActivationTable>
+    mut activator_query: Query<(&mut Activator, &SensorEvents), With<InGameEntity>>
 ) {
-    activation_table.0.iter_mut().for_each(|b| *b = false);
-
-    for (Activator(id), SensorEvents(ongoing_events, _)) in activator_query.iter() {
-        activation_table.0[*id] = ongoing_events.len() > 0;
+    for (
+        mut activator, 
+        SensorEvents(ongoing_events, _)
+    ) in activator_query.iter_mut() {
+        activator.is_active = ongoing_events.len() > 0;
     }
 }
 

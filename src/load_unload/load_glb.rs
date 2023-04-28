@@ -21,14 +21,14 @@ pub fn load_glb_asset(
 
 pub fn try_load_glb_data(
     mut loaded_glb_data: ResMut<LoadedGlbData>,
-    level_stack: Res<LevelStack>,
+    mut level_stack: ResMut<LevelStack>,
     gltf_assets: Res<Assets<Gltf>>,
     gltf_node_assets: Res<Assets<GltfNode>>,
     gltf_mesh_assets: Res<Assets<GltfMesh>>,
     mesh_assets: Res<Assets<Mesh>>,
     default_material: Res<DefaultMaterial>,
     mut menu_state: ResMut<NextState<MenuState>>,
-    mut next_state: ResMut<NextState<AppState>>
+    mut next_state: ResMut<NextState<AppState>>,
 ) {
     if let Some(gltf) = gltf_assets.get(&level_stack.get_current_level().handle.as_ref().unwrap()) {
         let num_threads = 10;
@@ -119,6 +119,8 @@ pub fn try_load_glb_data(
                 loaded_glb_data.0.append(&mut thread.join().expect("Could not join thread"));
             }
 
+            level_stack.get_current_level_mut().loaded_glb_data = Some(loaded_glb_data.clone());
+
             if DEBUG_MENUS { println!("Loading Complete!") }
 
             menu_state.set(MenuState::None);
@@ -130,8 +132,7 @@ pub fn try_load_glb_data(
 pub fn load_glb(
     mut commands: Commands,
     loaded_glb_data: Res<LoadedGlbData>,
-    mut mesh_assets: ResMut<Assets<Mesh>>,
-    mut activation_table: ResMut<ActivationTable>
+    mut mesh_assets: ResMut<Assets<Mesh>>
 ) {
     for LoadedGlbObject { 
         object_type, collider, 
@@ -140,7 +141,8 @@ pub fn load_glb(
         match object_type {
             GltfObjectType::Warp(
                 warp_to, 
-                activatable
+                activatable,
+                activator_option
             ) => {
                 commands.spawn(WarpBundle {
                     pbr_bundle: PbrBundle {
@@ -155,19 +157,21 @@ pub fn load_glb(
                     ..Default::default()
                 });
 
-                commands.spawn((SensorBundle::new(
+                let mut sensor_entity_commands = commands.spawn((SensorBundle::new(
                     Collider::cylinder(WARP_SENSOR_HEIGHT / 2.0, 1.0),
                     transform.with_translation(transform.translation + 
                         transform.rotation.mul_vec3(Vec3::Y * SCALE * WARP_SENSOR_HEIGHT / 2.0)), 
                     SensorChannel::Warp
-                ), activatable, warp_to));
+                ), activatable, warp_to.clone()));
+
+                if let Some(activator) = activator_option { 
+                    sensor_entity_commands.insert(activator);
+                }
             },
 
             GltfObjectType::Activator(
-                Activator(id)
+                Activator { id, .. }
             ) => {
-                activation_table.0.insert(id, false);
-
                 commands.spawn(PhysicsButtonBundle::new(
                     transform, material, &mut mesh_assets, id
                 ));
@@ -175,7 +179,9 @@ pub fn load_glb(
                 commands.spawn((SensorBundle::new(
                     Collider::cylinder(BUTTON_SENSOR_HEIGHT / 2.0, BUTTON_RADIUS),
                     transform, SensorChannel::Activator
-                ), Activator(id)));
+                ), Activator::new(id, ActivatorVariant::Button { 
+                    initial_position: transform.translation 
+                })));
             },
 
             GltfObjectType::Sensor(
@@ -252,7 +258,7 @@ struct ExtrasData {
 
 #[derive(Clone)]
 pub enum GltfObjectType {
-    Warp(WarpTo, Activatable),
+    Warp(WarpTo, Activatable, Option<Activator>),
     Activator(Activator),
     Sensor(SensorChannel, Option<[f32; 3]>),
     Movable(ColliderMassProperties, MaterialProperties),
@@ -268,6 +274,7 @@ impl From<ExtrasData> for GltfObjectType {
             ExtrasData { 
                 file_name: Some(file_name), 
                 activation_requirements,
+                activator_id,
                 ..
             } => {
                 // If activation_requirements is none, then there are no activation requirements
@@ -283,7 +290,8 @@ impl From<ExtrasData> for GltfObjectType {
                     Activatable {
                         requirements,
                         is_active
-                    }
+                    },
+                    activator_id.map(|id| Activator::new(id, ActivatorVariant::Warp))
                 )
             }, 
             
@@ -293,7 +301,9 @@ impl From<ExtrasData> for GltfObjectType {
                 activator_id: Some(id),
                 .. 
             } => {
-                GltfObjectType::Activator(Activator(id))
+                GltfObjectType::Activator(Activator::new(id, ActivatorVariant::Button { 
+                    initial_position: Vec3::ZERO 
+                }))
             },
         
             // Sensor
@@ -347,8 +357,8 @@ impl From<ExtrasData> for GltfObjectType {
 impl std::fmt::Debug for GltfObjectType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            GltfObjectType::Warp(warp_to, activatable) => 
-                pretty_debug!(GltfObjectType::Warp(warp_to, activatable)),
+            GltfObjectType::Warp(warp_to, activatable, activator_option) => 
+                pretty_debug!(GltfObjectType::Warp(warp_to, activatable, activator_option)),
             GltfObjectType::Activator(activator) => 
                 pretty_debug!(GltfObjectType::Activator(activator)),
             GltfObjectType::Sensor( sizes, gravity_direction_option ) => 

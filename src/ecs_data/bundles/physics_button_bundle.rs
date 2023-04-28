@@ -7,8 +7,8 @@ pub struct PhysicsButtonBundle {
     rigid_body: RigidBody,
     friction: Friction,
     restitution: Restitution,
-    activator: Activator,
-    activator_type: ActivatorType,
+    activatable: Activatable,
+    button_activatable: ButtonActivatable,
     in_game_entity: InGameEntity,
     jumpy: Jumpy
 }
@@ -27,8 +27,8 @@ impl PhysicsButtonBundle {
                 transform,
                 ..Default::default()
             },
-            activator: Activator(id),
-            activator_type: ActivatorType::Button { initial_position: transform.translation },
+            activatable: Activatable::new(vec![id]),
+            button_activatable: ButtonActivatable { initial_position: transform.translation },
             ..Default::default()
         }
     }
@@ -42,8 +42,8 @@ impl Default for PhysicsButtonBundle {
             rigid_body: RigidBody::KinematicPositionBased,
             friction: DEFAULT_MATERIAL_PROPERTIES.friction,
             restitution: DEFAULT_MATERIAL_PROPERTIES.restitution,
-            activator: Activator(0),
-            activator_type: ActivatorType::Button { initial_position: Vec3::ZERO },
+            activatable: Activatable::default(),
+            button_activatable: ButtonActivatable { initial_position: Vec3::ZERO },
             in_game_entity: InGameEntity,
             jumpy: Jumpy
         }

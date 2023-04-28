@@ -152,3 +152,13 @@ macro_rules! pretty_debug {
         }
     }
 }
+
+macro_rules! define_marker_components {
+    ($($unit_struct:ident),*) => {
+        $(
+            #[derive(Component)]
+            pub struct $unit_struct;
+            
+        )*
+    }
+}

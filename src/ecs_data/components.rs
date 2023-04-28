@@ -1,23 +1,19 @@
 use std::time::Duration;
-
+use bitmask_enum::bitmask;
 use super::*;
-use bitmask_enum::*;
 
-#[derive(Component, Default)]
-pub struct Player;
+define_marker_components!(
+    InGameEntity,
 
-#[derive(Component)]
-pub struct CanJumpSensor;
+    Player,
+    CanJumpSensor,
 
-#[derive(Component, Default)]
-pub struct InGameEntity;
+    Jumpy,
+    NotGravityWell,
+    AddTimerForReload,
 
-#[derive(Component)]
-pub struct MenuEntity;
-
-// Applied to all objects that can be jumped off of
-#[derive(Component, Default)]
-pub struct Jumpy;
+    MenuEntity
+);
 
 #[derive(Component, Debug)]
 pub struct CameraDir {
@@ -42,9 +38,6 @@ pub enum GravityType {
     AntiPlanets     // Gravitation pull away from masses
 }
 
-#[derive(Component, Default)]
-pub struct NotGravityWell;
-
 #[derive(Component)]
 pub struct GravitySensorDirection(pub Vec3);
 
@@ -55,19 +48,47 @@ pub struct Activatable {
     pub is_active: bool
 }
 
-// For buttons, levers, timers, etc.
-#[derive(Component, Clone, Debug)]
-pub struct Activator(pub usize);
+impl Activatable {
+    pub fn new(requirements: Vec<usize>) -> Self {
+        Self { requirements, is_active: false }
+    }
+}
+
+impl Default for Activatable {
+    fn default() -> Self {
+        Self::new(Vec::new())
+    }
+}
 
 #[derive(Component)]
-pub enum ActivatorType {
+pub struct ButtonActivatable {
+    pub initial_position: Vec3
+}
+
+// For buttons, levers, timers, etc.
+#[derive(Component, Clone, Debug)]
+pub struct Activator {
+    pub id: usize,
+    pub is_active: bool,
+    pub variant: ActivatorVariant
+}
+
+impl Activator {
+    pub fn new(id: usize, variant: ActivatorVariant) -> Self {
+        Self { id, variant, is_active: false }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ActivatorVariant {
     Button {
         initial_position: Vec3
     },
     Timer {
         duration: f32,
         seconds_left: f32
-    }
+    },
+    Warp
 }
 
 // Describes where the warp will take you
@@ -143,6 +164,3 @@ pub struct SoftUnloadedData {
     pub rigid_body_option: Option<RigidBody>,
     pub give_lifetime: Option<Duration>
 }
-
-#[derive(Component)]
-pub struct AddTimerForReload;

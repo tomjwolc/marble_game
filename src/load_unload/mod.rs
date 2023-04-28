@@ -16,9 +16,9 @@ pub use {
     reload::*
 };
 
-pub struct LevelGenerationPlugin;
+pub struct LoadUnloadPlugin;
 
-impl Plugin for LevelGenerationPlugin {
+impl Plugin for LoadUnloadPlugin {
     fn build(&self, app: &mut App) {
         /* Assumed that the gltf/glb asset will always be loaded 
          when the state is changed to InGame if LoadType is fresh */
@@ -48,7 +48,6 @@ impl Plugin for LevelGenerationPlugin {
             )
 
             .insert_resource(LevelStack::initial_stack())
-            .insert_resource(ActivationTable(vec![false; 10]))
             .insert_resource(LoadedGlbData(Vec::new()))
             .insert_resource(UnloadType::Hard)
             .insert_resource(LoadType::Fresh)

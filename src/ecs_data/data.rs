@@ -1,6 +1,7 @@
 use bevy::{prelude::Color, ui::{UiRect, Val}};
 use bevy_rapier3d::prelude::{Friction, CoefficientCombineRule, Restitution};
 pub use std::f32::consts::PI;
+use std::time::Duration;
 use phf::phf_map;
 
 pub const DEBUG_MENUS: bool = false;
@@ -17,6 +18,10 @@ pub const NUM_SPHERE_STACKS: usize = NUM_SPHERE_SECTORS;
 pub const CYLINDER_RESOLUTION: u32 = 20;
 pub const NUM_CYLINDER_SEGMENTS: u32 = 50;
 
+// Reload effects
+pub const RELOAD_VELOCITY_QUOTIENT: f32 = 5.0;
+pub const RELOAD_WARP_DISABLE_DURATION: Duration = Duration::from_millis(6000);
+
 // Gravity
 pub const GRAVITATIONAL_CONSTANT: f32 = 0.01;
 pub const GRAVITY: f32 = 20.0 * SCALE;
@@ -26,6 +31,9 @@ pub const NUM_STACKS: usize = 50;
 pub const NUM_SECTORS: usize = 50;
 pub const FRICTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Multiply;
 pub const RESTITUTION_COMBINE_RULE: CoefficientCombineRule = CoefficientCombineRule::Average;
+
+// PkvStore keys
+pub const COMPLETED_LEVELS: &'static str = "completed levels";
 
 // Camera orbit
 pub const MAX_ANGLE: f32 = 0.8 * std::f32::consts::PI / 2.0;

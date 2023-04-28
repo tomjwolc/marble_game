@@ -1,17 +1,28 @@
 use super::*;
 
 pub fn reload(
-    mut soft_unloaded_entities_query: Query<(Entity, Option<&mut Visibility>, Option<&Transform>, &SoftUnloadedData)>,
+    mut soft_unloaded_entities_query: Query<(Entity, 
+        Option<&mut Visibility>, 
+        Option<&Transform>, 
+        Option<&Player>,
+        Option<&mut Velocity>,
+        &SoftUnloadedData
+    )>,
     level_stack: Res<LevelStack>,
+    mut loaded_glb_data: ResMut<LoadedGlbData>,
     mut commands: Commands,
     time: Res<Time>
 ) {
     if DEBUG_MENUS || DEBUG_LOAD { println!("Reloading previous level") }
 
+    *loaded_glb_data = level_stack.get_current_level().loaded_glb_data.as_ref().unwrap().clone();
+
     for (
         entity, 
         visibility_option,
         transform_option,
+        player_option,
+        velocity_option,
         SoftUnloadedData { 
             id, 
             collider_option, 
@@ -44,6 +55,13 @@ pub fn reload(
                 lifetime: *lifetime, 
                 spawn_time: time.elapsed() 
             });
+        }
+
+        if let Some(mut velocity) = velocity_option {
+            if player_option.is_some() { 
+                velocity.linvel /= RELOAD_VELOCITY_QUOTIENT;
+                velocity.angvel /= RELOAD_VELOCITY_QUOTIENT;
+            }
         }
     }
 }

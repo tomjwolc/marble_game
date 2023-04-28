@@ -22,9 +22,9 @@ pub fn kill_timed(
     mut commands: Commands
 ) {
     for (entity, Timed { spawn_time, lifetime }) in timed_entity_query.into_iter() {
-        println!("{:?} -- {:?} -- {:?}", entity, spawn_time, lifetime);
+        // println!("{:?} -- {:?} -- {:?}", entity, spawn_time, lifetime);
         if time.elapsed() >= *spawn_time + *lifetime {
-            println!("Timer removed");
+            // println!("Timer removed");
             commands.entity(entity).remove::<Timed>();
         }
     }
